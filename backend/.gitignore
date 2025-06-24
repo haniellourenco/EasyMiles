@@ -1,0 +1,69 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches
+*.log
+*.pot
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Django stuff:
+*.sqlite3
+db.sqlite3
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.db-journal
+*.log
+media/
+staticfiles/
+static_root/
+local_settings.py
+.env
+.env.*
+
+# VSCode
+.vscode/
+
+
+# Postgres dumps
+*.dump
+*.sql
+
+# Pycharm
+.idea/
+
+# Coverage reports
+htmlcov/
+.coverage
+.tox/
+.nox/
+
+# Pip files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Migrations
+**/migrations/
+!**/migrations/__init__.py
+
+
+# Build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Others
+*.bak
+*.swp
+*.swo

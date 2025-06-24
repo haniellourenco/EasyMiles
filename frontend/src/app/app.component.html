@@ -1,0 +1,72 @@
+<nz-layout class="app-layout">
+  <nz-sider class="menu-sidebar" nzCollapsible nzWidth="256px" nzBreakpoint="md" [(nzCollapsed)]="isCollapsed"
+    [nzTrigger]="null">
+    <div class="sidebar-logo">
+      <h2>EasyMiles</h2>
+    </div>
+    <ul nz-menu nzTheme="light" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
+      <li nz-menu-item nzTitle="Dashboard" nzIcon="dashboard">
+        <nz-icon nzType="dashboard" nzTheme="outline" />
+        <span>
+          <a routerLink="/dashboard">Painel de controle</a>
+        </span>
+      </li>
+      <li nz-menu-item>
+        <nz-icon nzType="user" nzTheme="outline" />
+        <span>
+          <a routerLink="/profile">Perfil</a>
+        </span>
+      </li>
+      <li nz-menu-item>
+        <nz-icon nzType="wallet" nzTheme="outline" />
+        <span>
+          <a routerLink="/wallet">Carteiras</a>
+        </span>
+      </li>
+      <li nz-menu-item>
+        <nz-icon nzType="star" nzTheme="outline" />
+        <span>
+          <a routerLink="/loyalty-programs">Programas de fidelidade</a>
+        </span>
+      </li>
+      <li nz-menu-item>
+        <nz-icon nzType="credit-card" nzTheme="outline" />
+        <span>
+          <a routerLink="/add-transaction">Adicionar transação</a>
+        </span>
+      </li>
+      <li nz-menu-item>
+        <nz-icon nzType="history" nzTheme="outline" />
+        <span>
+          <a routerLink="/transaction-history">Histórico de transações</a>
+        </span>
+      </li>
+      <li nz-menu-item>
+        <nz-icon nzType="setting" nzTheme="outline" />
+        <span>
+          <a routerLink="/settings">Configurações</a>
+        </span>
+      </li>
+      <li nz-menu-item nzDanger>
+        <nz-icon nzType="logout" nzTheme="outline" />
+        <span>
+          <a routerLink="/logout">Sair</a>
+        </span>
+      </li>
+    </ul>
+  </nz-sider>
+  <nz-layout>
+    <nz-header>
+      <div class="app-header">
+        <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
+          <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
+        </span>
+      </div>
+    </nz-header>
+    <nz-content>
+      <div class="inner-content">
+        <router-outlet></router-outlet>
+      </div>
+    </nz-content>
+  </nz-layout>
+</nz-layout>
