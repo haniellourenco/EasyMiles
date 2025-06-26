@@ -1,0 +1,39 @@
+/* src/app/pages/wallets/wallet-list/wallet-list.component.css */
+.page-container {
+  padding: 24px;
+}
+
+.wallet-card {
+  transition: box-shadow 0.3s, transform 0.3s;
+  border: 1px solid #f0f0f0;
+}
+
+.wallet-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+}
+
+.card-content {
+  margin: 24px 0;
+  text-align: center;
+}
+
+.wallet-value {
+  font-size: 2em;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.wallet-value-label {
+  font-size: 0.9em;
+  color: #888;
+  margin: 0;
+}
+
+.card-footer {
+  font-size: 0.8em;
+  color: #aaa;
+  margin-top: 16px;
+  text-align: center;
+}

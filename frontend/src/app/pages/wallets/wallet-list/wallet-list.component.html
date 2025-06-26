@@ -1,0 +1,34 @@
+<div class="page-container">
+    <nz-page-header nzTitle="Minhas Carteiras" nzSubtitle="Gerencie suas carteiras de milhas">
+        <nz-page-header-extra>
+            <button nz-button nzType="primary">
+                <i nz-icon nzType="plus"></i>
+                Nova Carteira
+            </button>
+        </nz-page-header-extra>
+    </nz-page-header>
+
+    <div nz-row [nzGutter]="[16, 16]">
+        <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" *ngFor="let wallet of wallets">
+            <nz-card class="wallet-card" [nzActions]="[actionDetails, actionOptions]">
+                <nz-card-meta [nzTitle]="wallet.name"
+                    [nzDescription]="'Contém ' + wallet.accountCount + ' contas de fidelidade'">
+                </nz-card-meta>
+                <div class="card-content">
+                    <p class="wallet-value">{{ wallet.totalValue | currency:'BRL' }}</p>
+                    <p class="wallet-value-label">Valor Estimado Total</p>
+                </div>
+                <div class="card-footer">
+                    Última atualização: {{ wallet.lastUpdate | date:'short' }}
+                </div>
+            </nz-card>
+            <ng-template #actionDetails>
+                <a routerLink="'/wallets', wallet.id"> <i nz-icon nzType="profile" nzTheme="outline"></i> Detalhes
+                </a>
+            </ng-template>
+            <ng-template #actionOptions>
+                <i nz-icon nzType="setting" nzTheme="outline"></i>
+            </ng-template>
+        </div>
+    </div>
+</div>

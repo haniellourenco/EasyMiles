@@ -1,0 +1,52 @@
+<p>wallet-detail works!</p>
+<div class="page-container">
+    <nz-page-header [nzGhost]="false" [nzTitle]="wallet.name" nzSubtitle="Detalhes da carteira">
+        <nz-page-header-extra>
+            <button nz-button [routerLink]="['/wallets']">
+                <i nz-icon nzType="arrow-left"></i>
+                Voltar para a Lista
+            </button>
+            <button nz-button nzType="primary">Adicionar Conta</button>
+        </nz-page-header-extra>
+
+        <nz-page-header-content>
+            <nz-descriptions nzSize="small" [nzColumn]="2">
+                <nz-descriptions-item nzTitle="Proprietário">{{ wallet.owner }}</nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Valor Estimado">
+                    <a>{{ wallet.totalValue | currency:'BRL' }}</a>
+                </nz-descriptions-item>
+            </nz-descriptions>
+        </nz-page-header-content>
+    </nz-page-header>
+
+    <nz-card class="table-card" nzTitle="Contas de Fidelidade nesta Carteira">
+        <nz-table #basicTable [nzData]="loyaltyAccounts" [nzShowPagination]="false">
+            <thead>
+                <tr>
+                    <th>Programa</th>
+                    <th>Saldo</th>
+                    <th>Tipo</th>
+                    <th>Custo Médio (milheiro)</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let data of basicTable.data">
+                    <td>{{ data.program }}</td>
+                    <td>{{ data.balance | number }}</td>
+                    <td>
+                        <nz-tag [nzColor]="data.currencyType === 'MILHA' ? 'blue' : 'gold'">
+                            {{ data.currencyType }}
+                        </nz-tag>
+                    </td>
+                    <td>{{ data.averageCost | currency:'BRL' }}</td>
+                    <td>
+                        <a>Ver Transações</a>
+                        <nz-divider nzType="vertical"></nz-divider>
+                        <a>Editar</a>
+                    </td>
+                </tr>
+            </tbody>
+        </nz-table>
+    </nz-card>
+</div>
