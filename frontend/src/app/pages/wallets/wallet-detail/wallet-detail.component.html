@@ -1,4 +1,3 @@
-<p>wallet-detail works!</p>
 <div class="page-container">
     <nz-page-header [nzGhost]="false" [nzTitle]="wallet.name" nzSubtitle="Detalhes da carteira">
         <nz-page-header-extra>
@@ -27,7 +26,6 @@
                     <th>Saldo</th>
                     <th>Tipo</th>
                     <th>Custo Médio (milheiro)</th>
-                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -40,11 +38,6 @@
                         </nz-tag>
                     </td>
                     <td>{{ data.averageCost | currency:'BRL' }}</td>
-                    <td>
-                        <a>Ver Transações</a>
-                        <nz-divider nzType="vertical"></nz-divider>
-                        <a>Editar</a>
-                    </td>
                 </tr>
             </tbody>
         </nz-table>
