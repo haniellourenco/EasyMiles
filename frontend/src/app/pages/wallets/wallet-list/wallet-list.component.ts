@@ -1,17 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-  ReactiveFormsModule,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { Wallet, WalletService } from '../../../services/wallet.service';
+
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { NzMessageService } from 'ng-zorro-antd/message';
-
-import { NzModalModule } from 'ng-zorro-antd/modal';
-import { NzFormModule } from 'ng-zorro-antd/form';
-import { NzInputModule } from 'ng-zorro-antd/input';
+import { ReactiveFormsModule } from '@angular/forms';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -20,6 +14,9 @@ import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzMessageModule } from 'ng-zorro-antd/message';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzInputModule } from 'ng-zorro-antd/input';
 
 @Component({
   selector: 'app-wallet-list',
@@ -28,18 +25,17 @@ import { NzMessageModule } from 'ng-zorro-antd/message';
     CommonModule,
     RouterModule,
     ReactiveFormsModule,
-
     NzPageHeaderModule,
     NzButtonModule,
     NzIconModule,
     NzCardModule,
     NzGridModule,
-    NzModalModule,
-    NzFormModule,
-    NzInputModule,
     NzDropDownModule,
     NzPopconfirmModule,
     NzMessageModule,
+    NzModalModule,
+    NzFormModule,
+    NzInputModule,
   ],
   templateUrl: './wallet-list.component.html',
   styleUrls: ['./wallet-list.component.css'],
@@ -50,44 +46,38 @@ export class WalletListComponent implements OnInit {
   modalTitle = 'Criar Nova Carteira';
   walletForm!: FormGroup;
   editingWalletId: number | null = null;
+  wallets: Wallet[] = [];
 
-  wallets = [
-    {
-      id: 1,
-      name: 'Carteira Principal',
-      totalValue: 1250.75,
-      accountCount: 3,
-      lastUpdate: new Date('2025-06-23T14:00:00Z'),
-    },
-    {
-      id: 2,
-      name: 'Viagem para Europa',
-      totalValue: 3800.0,
-      accountCount: 2,
-      lastUpdate: new Date('2025-06-24T10:30:00Z'),
-    },
-    {
-      id: 3,
-      name: 'Projetos Futuros',
-      totalValue: 540.2,
-      accountCount: 1,
-      lastUpdate: new Date('2025-06-22T18:45:00Z'),
-    },
-  ];
-
-  constructor(private fb: FormBuilder, private message: NzMessageService) {}
+  constructor(
+    private fb: FormBuilder,
+    private message: NzMessageService,
+    private walletService: WalletService
+  ) {}
 
   ngOnInit(): void {
     this.walletForm = this.fb.group({
-      name: [null, [Validators.required, Validators.minLength(3)]],
+      wallet_name: [null, [Validators.required, Validators.minLength(3)]],
+    });
+    this.loadWallets();
+  }
+
+  loadWallets(): void {
+    this.walletService.getWallets().subscribe({
+      next: (data) => {
+        this.wallets = data;
+      },
+      error: (err) => {
+        console.error('Erro ao carregar carteiras', err);
+        this.message.error('Não foi possível carregar as carteiras.');
+      },
     });
   }
 
-  showModal(wallet?: any): void {
+  showModal(wallet?: Wallet): void {
     if (wallet) {
       this.modalTitle = 'Editar Carteira';
       this.editingWalletId = wallet.id;
-      this.walletForm.setValue({ name: wallet.name });
+      this.walletForm.setValue({ wallet_name: wallet.wallet_name });
     } else {
       this.modalTitle = 'Criar Nova Carteira';
       this.editingWalletId = null;
@@ -99,28 +89,28 @@ export class WalletListComponent implements OnInit {
   handleOk(): void {
     if (this.walletForm.valid) {
       this.isModalLoading = true;
-      const walletData = { name: this.walletForm.value.name };
+      const walletData = this.walletForm.value;
 
-      setTimeout(() => {
-        if (this.editingWalletId) {
-          this.wallets = this.wallets.map((w) =>
-            w.id === this.editingWalletId ? { ...w, ...walletData } : w
+      const apiCall = this.editingWalletId
+        ? this.walletService.updateWallet(this.editingWalletId, walletData)
+        : this.walletService.createWallet(walletData);
+
+      apiCall.subscribe({
+        next: () => {
+          this.message.success(
+            `Carteira ${
+              this.editingWalletId ? 'atualizada' : 'criada'
+            } com sucesso!`
           );
-          this.message.success('Carteira atualizada com sucesso!');
-        } else {
-          const newWallet = {
-            ...walletData,
-            id: Date.now(),
-            totalValue: 0,
-            accountCount: 0,
-            lastUpdate: new Date(),
-          };
-          this.wallets = [...this.wallets, newWallet];
-          this.message.success('Carteira criada com sucesso!');
-        }
-
-        this.closeModal();
-      }, 1000);
+          this.loadWallets();
+          this.closeModal();
+        },
+        error: (err) => {
+          console.error('Erro ao salvar carteira', err);
+          this.message.error('Erro ao salvar carteira.');
+          this.isModalLoading = false;
+        },
+      });
     } else {
       this.validateForm();
     }
@@ -131,8 +121,16 @@ export class WalletListComponent implements OnInit {
   }
 
   deleteWallet(walletId: number): void {
-    this.wallets = this.wallets.filter((w) => w.id !== walletId);
-    this.message.success('Carteira excluída com sucesso!');
+    this.walletService.deleteWallet(walletId).subscribe({
+      next: () => {
+        this.message.success('Carteira excluída com sucesso!');
+        this.loadWallets();
+      },
+      error: (err) => {
+        console.error('Erro ao excluir carteira', err);
+        this.message.error('Erro ao excluir a carteira.');
+      },
+    });
   }
 
   private closeModal(): void {

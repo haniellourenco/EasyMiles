@@ -11,16 +11,8 @@
     <div nz-row [nzGutter]="[16, 16]">
         <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" *ngFor="let wallet of wallets">
             <nz-card class="wallet-card" [nzActions]="[actionDetails, actionMore]">
-                <nz-card-meta [nzTitle]="wallet.name"
-                    [nzDescription]="'Contém ' + wallet.accountCount + ' contas de fidelidade'">
+                <nz-card-meta [nzTitle]="wallet.wallet_name" nzDescription="Acesse para ver os detalhes e contas.">
                 </nz-card-meta>
-                <div class="card-content">
-                    <p class="wallet-value">{{ wallet.totalValue | currency:'BRL' }}</p>
-                    <p class="wallet-value-label">Valor Estimado Total</p>
-                </div>
-                <div class="card-footer">
-                    Última atualização: {{ wallet.lastUpdate | date:'short' }}
-                </div>
             </nz-card>
             <ng-template #actionDetails>
                 <a [routerLink]="['/wallets', wallet.id]"> <i nz-icon nzType="profile"></i> Detalhes </a>
@@ -52,7 +44,7 @@
                 <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>Nome</nz-form-label>
                 <nz-form-control [nzSm]="14" [nzXs]="24"
                     nzErrorTip="O nome da carteira é obrigatório (mín. 3 caracteres).">
-                    <input nz-input formControlName="name" placeholder="Ex: Carteira Principal" />
+                    <input nz-input formControlName="wallet_name" placeholder="Ex: Carteira Principal" />
                 </nz-form-control>
             </nz-form-item>
         </form>
