@@ -1,4 +1,3 @@
-# backend - Copia/api/views.py
 from rest_framework import viewsets, status, generics, views
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -42,19 +41,11 @@ class LoyaltyProgramViewSet(viewsets.ModelViewSet):
     # permission_classes = [IsAuthenticated] # Default
 
     def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        GET, LIST, RETRIEVE: IsAuthenticated
-        CREATE, UPDATE, PARTIAL_UPDATE, DESTROY: IsAdminUser (ou lógica customizada para criador)
-        """
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'create', 'destroy']:
             permission_classes = [IsAuthenticated]
-        elif self.action == 'create': # Permitir usuários criarem programas marcados como "is_user_created"
-            permission_classes = [IsAuthenticated]
-        else: # Apenas Admin pode modificar/deletar programas globais ou de outros usuários
-            permission_classes = [IsAdminUser] # Ou uma permissão customizada mais granular
+        else: 
+            permission_classes = [IsAdminUser] 
         return [permission() for permission in permission_classes]
-
 
     def get_queryset(self):
         # Programas ativos, ou todos se for admin
@@ -63,23 +54,13 @@ class LoyaltyProgramViewSet(viewsets.ModelViewSet):
         
         # Usuários comuns veem programas ativos globais OU os que eles criaram
         return LoyaltyProgram.objects.filter(
-            Q(is_active=True, is_user_created=False) | 
+            Q(is_user_created=False, is_active=True) | 
             Q(created_by=self.request.user)
         ).distinct().order_by('name')
 
     def perform_create(self, serializer):
-        # Serializer já trata `created_by` e `is_user_created` com base no payload.
-        # Se `is_user_created` for True, o serializer (ou a view aqui) deve atribuir o `request.user`.
-        # Programas "padrão" (is_user_created=False) só podem ser criados por admins.
-        is_user_created_payload = serializer.validated_data.get('is_user_created', False)
-        if is_user_created_payload:
-            serializer.save(created_by=self.request.user, is_user_created=True)
-        else:
-            if not self.request.user.is_staff:
-                self.permission_denied(
-                    self.request, message="Apenas administradores podem criar programas globais."
-                )
-            serializer.save(created_by=None, is_user_created=False)
+        # Atribui o usuário logado ao criar um programa customizado.
+        serializer.save(created_by=self.request.user, is_user_created=True)
 
     def perform_update(self, serializer):
         instance = serializer.instance
@@ -90,16 +71,18 @@ class LoyaltyProgramViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     def perform_destroy(self, instance):
-        # Apenas admin ou o criador (se for user_created) pode deletar
-        # `on_delete=models.PROTECT` em LoyaltyAccount.program já protege se houver contas.
-        if not self.request.user.is_staff and \
-           (not instance.is_user_created or instance.created_by != self.request.user):
-            self.permission_denied(self.request, message="Você não tem permissão para deletar este programa.")
+       
+        if not instance.is_user_created or instance.created_by != self.request.user:
+            
+            raise serializers.ValidationError(
+                {"detail": "Você não tem permissão para deletar este programa."}
+            )
         
-        if instance.loyalty_accounts.exists(): # Verifica se há LoyaltyAccounts associadas
-             raise serializers.ValidationError(
-                 {"detail": f"Não é possível excluir o programa '{instance.name}' pois existem contas de fidelidade associadas a ele."}
-             )
+        if instance.loyalty_accounts.exists():
+            raise serializers.ValidationError(
+                {"detail": f"Não é possível excluir o programa '{instance.name}' pois existem contas de fidelidade associadas a ele."}
+            )
+        
         instance.delete()
 
 
@@ -143,8 +126,7 @@ class LoyaltyAccountViewSet(viewsets.ModelViewSet):
         account_instance = serializer.instance
         if account_instance.wallet.user != self.request.user:
             self.permission_denied(self.request, message="Você não tem permissão para editar esta conta.")
-        # Atualiza last_updated se o payload não o especificar ou se um campo crítico mudar.
-        # A maneira mais simples é sempre atualizar ou confiar no payload.
+
         serializer.save(last_updated=serializer.validated_data.get('last_updated', timezone.now()))
 
 
@@ -172,23 +154,17 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 
     @db_transaction.atomic
     def perform_create(self, serializer):
-        # Validação de propriedade das contas já ocorre no serializer.
         transaction = serializer.save()
         self._apply_transaction_effects(transaction)
 
     @db_transaction.atomic
     def perform_update(self, serializer):
-        # Atualizar uma transação é complexo devido ao impacto nos saldos e custos.
-        # Idealmente, estorna-se a antiga e cria-se uma nova.
-        # Se for permitido, deve-se reverter os efeitos da transação original
-        # e aplicar os efeitos da transação atualizada.
+        
         
         # Garante que a transação pertence ao usuário (indiretamente, via contas)
-        original_instance = self.get_object() # serializer.instance pode ser o estado *antes* do save parcial.
+        original_instance = self.get_object() 
         self._ensure_transaction_ownership(original_instance, self.request.user)
 
-        # Salva o estado antigo para reverter (simplificado)
-        # É melhor buscar o objeto do BD para ter certeza do estado antes da validação do serializer.
         old_transaction_state = PointsTransaction.objects.get(pk=original_instance.pk)
         
         # Reverte efeitos da transação no estado *antes* do save do serializer.
@@ -218,7 +194,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
             self.permission_denied(self.request, message="Você não tem permissão para modificar esta transação.")
 
     def _apply_transaction_effects(self, transaction: PointsTransaction):
-        """Aplica os efeitos de uma transação aos saldos e custos médios das contas."""
         ttype = transaction.transaction_type
         amount = abs(transaction.amount) # Garante que o montante é positivo
         transaction_cost = transaction.cost if transaction.cost is not None else Decimal('0.00')
@@ -317,12 +292,7 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 
 
     def _reverse_transaction_effects(self, transaction: PointsTransaction):
-        """
-        Reverte os efeitos de saldo de uma transação.
-        AVISO: Reverter o custo médio com precisão histórica é muito complexo e
-        geralmente requer conhecimento do estado anterior ou recálculo completo.
-        Esta função foca em reverter o saldo.
-        """
+        
         ttype = transaction.transaction_type
         amount = abs(transaction.amount)
         # transaction_cost = transaction.cost if transaction.cost is not None else Decimal('0.00')
@@ -333,7 +303,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
             acc.current_balance -= amount
             acc.last_updated = timezone.now()
             acc.save()
-            # Reverter average_cost é complexo. Idealmente, não se deleta transações que afetam custo.
 
         # Tipo 2: Transferência -> Creditar origin, Debitar destination
         elif ttype == 2 and transaction.origin_account and transaction.destination_account:
@@ -377,7 +346,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 
 class SimulationViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
-    # Mapeamento para documentação automática (ex: drf-spectacular)
     serializer_action_classes = {
         'transfer': SimulateTransferSerializer,
         'sale': SimulateSaleSerializer,
