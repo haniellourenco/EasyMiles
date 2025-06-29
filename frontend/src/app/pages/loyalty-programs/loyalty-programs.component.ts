@@ -142,7 +142,13 @@ export class LoyaltyProgramsComponent implements OnInit {
         this.message.success('Programa excluído com sucesso!');
         this.loadPrograms();
       },
-      error: () => this.message.error('Não foi possível excluir o programa.'),
+      error: (err: any) => {
+        // Agora tentamos pegar a mensagem 'detail' do erro.
+        // Se não existir, usamos a mensagem genérica.
+        const errorMessage =
+          err.error?.detail || 'Não foi possível excluir o programa.';
+        this.message.error(errorMessage);
+      },
     });
   }
 }
