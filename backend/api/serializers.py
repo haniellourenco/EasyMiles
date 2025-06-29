@@ -76,7 +76,7 @@ class LoyaltyAccountSerializer(serializers.ModelSerializer):
             'account_number', 'name', 'current_balance', 'average_cost',
             'custom_rate', 'last_updated', 'is_active', 'created_at'
         ]
-        read_only_fields = ['created_at']
+        read_only_fields = ['created_at','wallet', 'last_updated', 'is_active']
         # 'wallet' será preenchido pela URL em rotas aninhadas ou validado se fornecido diretamente.
 
     def validate_program(self, value):

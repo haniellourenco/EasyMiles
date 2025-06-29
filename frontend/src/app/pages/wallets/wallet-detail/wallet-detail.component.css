@@ -1,0 +1,24 @@
+.page-container {
+  padding: 24px;
+}
+
+.table-card {
+  margin-top: 24px;
+}
+
+nz-page-header {
+  background-color: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.full-width {
+  width: 100%;
+}

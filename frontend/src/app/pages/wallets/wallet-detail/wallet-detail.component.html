@@ -1,0 +1,98 @@
+<div class="page-container">
+    <ng-container *ngIf="!isLoading && wallet; else loadingState">
+
+        <nz-page-header [nzGhost]="false" [nzTitle]="wallet.wallet_name" nzSubtitle="Detalhes da carteira">
+            <nz-page-header-extra>
+                <button nz-button [routerLink]="['/wallets']">
+                    <i nz-icon nzType="arrow-left"></i>
+                    Voltar para a Lista
+                </button>
+                <button nz-button nzType="primary" (click)="showAddAccountModal()">Adicionar Conta</button>
+            </nz-page-header-extra>
+        </nz-page-header>
+
+        <nz-card class="table-card" nzTitle="Contas de Fidelidade nesta Carteira">
+            <nz-table #basicTable [nzData]="loyaltyAccounts" [nzShowPagination]="false">
+                <thead>
+                    <tr>
+                        <th>Programa</th>
+                        <th>Saldo</th>
+                        <th>Tipo Moeda</th>
+                        <th>Custo Médio (milheiro)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let account of basicTable.data">
+                        <td>{{ account.program_name }}</td>
+                        <td>{{ account.current_balance | number }}</td>
+                        <td>
+                            <nz-tag [nzColor]="account.program_currency_type === 'Milhas' ? 'blue' : 'gold'">
+                                {{ account.program_currency_type }}
+                            </nz-tag>
+                        </td>
+                        <td>{{ account.average_cost | currency:'BRL' }}</td>
+                    </tr>
+                </tbody>
+            </nz-table>
+        </nz-card>
+
+    </ng-container>
+
+    <ng-template #loadingState>
+        <div class="spinner-container">
+            <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+        </div>
+    </ng-template>
+</div>
+<nz-modal [(nzVisible)]="isAddAccountModalVisible" nzTitle="Adicionar Conta de Fidelidade"
+    (nzOnCancel)="handleAddAccountCancel()" (nzOnOk)="handleAddAccountOk()" [nzOkLoading]="isAddAccountModalLoading"
+    nzOkText="Salvar" nzCancelText="Cancelar" [nzWidth]="600">
+    <ng-container *nzModalContent>
+        <form nz-form [formGroup]="addAccountForm" nzLayout="vertical">
+            <nz-form-item>
+                <nz-form-label nzRequired>Programa de Fidelidade</nz-form-label>
+                <nz-form-control nzErrorTip="Por favor, selecione um programa.">
+                    <nz-select formControlName="program" nzPlaceHolder="Selecione o programa">
+                        <nz-option *ngFor="let program of availablePrograms" [nzLabel]="program.name"
+                            [nzValue]="program.id"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+                <nz-form-label nzRequired>Nome da Conta</nz-form-label>
+                <nz-form-control nzErrorTip="Por favor, dê um nome para a conta.">
+                    <input nz-input formControlName="name" placeholder="Ex: Minha conta pessoal Smiles" />
+                </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+                <nz-form-label nzRequired>Número da Conta/Participante</nz-form-label>
+                <nz-form-control nzErrorTip="Por favor, insira o número da conta.">
+                    <input nz-input formControlName="account_number" placeholder="123456789" />
+                </nz-form-control>
+            </nz-form-item>
+
+            <div nz-row [nzGutter]="16">
+                <div nz-col [nzSpan]="12">
+                    <nz-form-item>
+                        <nz-form-label nzRequired>Saldo Inicial</nz-form-label>
+                        <nz-form-control nzErrorTip="Por favor, insira o saldo.">
+                            <nz-input-number [nzStep]="1000" [nzMin]="0" formControlName="current_balance"
+                                class="full-width"></nz-input-number>
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+                <div nz-col [nzSpan]="12">
+                    <nz-form-item>
+                        <nz-form-label nzRequired>Custo Médio (p/ 1.000)</nz-form-label>
+                        <nz-form-control nzErrorTip="Por favor, insira o custo.">
+                            <nz-input-number [nzStep]="0.5" [nzMin]="0" formControlName="average_cost"
+                                class="full-width"></nz-input-number>
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+            </div>
+        </form>
+    </ng-container>
+</nz-modal>
