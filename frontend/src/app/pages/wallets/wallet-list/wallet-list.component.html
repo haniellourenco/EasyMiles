@@ -1,0 +1,52 @@
+<div class="page-container">
+    <nz-page-header nzTitle="Minhas Carteiras" nzSubtitle="Gerencie suas carteiras de milhas">
+        <nz-page-header-extra>
+            <button nz-button nzType="primary" (click)="showModal()">
+                <i nz-icon nzType="plus"></i>
+                Nova Carteira
+            </button>
+        </nz-page-header-extra>
+    </nz-page-header>
+
+    <div nz-row [nzGutter]="[16, 16]">
+        <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" *ngFor="let wallet of wallets">
+            <nz-card class="wallet-card" [nzActions]="[actionDetails, actionMore]">
+                <nz-card-meta [nzTitle]="wallet.wallet_name" nzDescription="Acesse para ver os detalhes e contas.">
+                </nz-card-meta>
+            </nz-card>
+            <ng-template #actionDetails>
+                <a [routerLink]="['/wallets', wallet.id]"> <i nz-icon nzType="profile"></i> Detalhes </a>
+            </ng-template>
+            <ng-template #actionMore>
+                <a nz-dropdown [nzDropdownMenu]="menu"> <i nz-icon nzType="ellipsis"></i> Mais </a>
+                <nz-dropdown-menu #menu="nzDropdownMenu">
+                    <ul nz-menu>
+                        <li nz-menu-item (click)="showModal(wallet)">
+                            <i nz-icon nzType="edit" class="action-icon"></i> Editar
+                        </li>
+                        <li nz-menu-item nz-popconfirm nzPopconfirmTitle="Tem certeza que deseja excluir esta carteira?"
+                            nzPopconfirmPlacement="top" (nzOnConfirm)="deleteWallet(wallet.id)" nzOkText="Sim, excluir"
+                            nzCancelText="Cancelar">
+                            <i nz-icon nzType="delete" class="action-icon"></i> Excluir
+                        </li>
+                    </ul>
+                </nz-dropdown-menu>
+            </ng-template>
+        </div>
+    </div>
+</div>
+
+<nz-modal [(nzVisible)]="isModalVisible" [nzTitle]="modalTitle" (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()"
+    [nzOkLoading]="isModalLoading" nzOkText="Salvar" nzCancelText="Cancelar">
+    <ng-container *nzModalContent>
+        <form nz-form [formGroup]="walletForm">
+            <nz-form-item>
+                <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>Nome</nz-form-label>
+                <nz-form-control [nzSm]="14" [nzXs]="24"
+                    nzErrorTip="O nome da carteira é obrigatório (mín. 3 caracteres).">
+                    <input nz-input formControlName="wallet_name" placeholder="Ex: Carteira Principal" />
+                </nz-form-control>
+            </nz-form-item>
+        </form>
+    </ng-container>
+</nz-modal>
