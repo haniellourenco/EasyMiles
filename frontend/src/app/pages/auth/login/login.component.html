@@ -1,0 +1,42 @@
+<div class="login-container">
+    <div class="login-card">
+        <nz-card>
+            <div class="login-header">
+                <h2>EasyMiles Login</h2>
+                <p>Bem-vindo de volta!</p>
+            </div>
+
+            <form nz-form [formGroup]="loginForm" class="login-form" (ngSubmit)="submitForm()">
+                <nz-form-item>
+                    <nz-form-control nzErrorTip="Por favor, insira seu nome de usuário!">
+                        <nz-input-group nzPrefixIcon="user">
+                            <input type="text" nz-input formControlName="username" placeholder="Usuário" />
+                        </nz-input-group>
+                    </nz-form-control>
+                </nz-form-item>
+                <nz-form-item>
+                    <nz-form-control nzErrorTip="Por favor, insira sua senha!">
+                        <nz-input-group nzPrefixIcon="lock">
+                            <input type="password" nz-input formControlName="password" placeholder="Senha" />
+                        </nz-input-group>
+                    </nz-form-control>
+                </nz-form-item>
+                <div nz-row class="login-form-margin">
+                    <div nz-col [nzSpan]="12">
+                        <label nz-checkbox formControlName="remember">
+                            <span>Lembrar-me</span>
+                        </label>
+                    </div>
+                    <div nz-col [nzSpan]="12" class="login-form-forgot-wrapper">
+                        <a class="login-form-forgot" href="#">Esqueceu a senha?</a>
+                    </div>
+                </div>
+                <button nz-button class="login-form-button login-form-margin" [nzType]="'primary'"
+                    [nzLoading]="isLoading">
+                    Login
+                </button>
+                Ou <a href="#">crie sua conta agora!</a>
+            </form>
+        </nz-card>
+    </div>
+</div>
