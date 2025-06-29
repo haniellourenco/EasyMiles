@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: '/wallets' },
+  { path: '', pathMatch: 'full', redirectTo: '' },
   {
     path: 'wallets',
 
