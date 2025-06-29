@@ -15,7 +15,9 @@
             <nz-table #basicTable [nzData]="loyaltyAccounts" [nzShowPagination]="false">
                 <thead>
                     <tr>
+                        <th>Nome da Conta</th>
                         <th>Programa</th>
+                        <th>Número da Conta</th>
                         <th>Saldo</th>
                         <th>Tipo Moeda</th>
                         <th>Custo Médio (milheiro)</th>
@@ -23,7 +25,9 @@
                 </thead>
                 <tbody>
                     <tr *ngFor="let account of basicTable.data">
+                        <td>{{ account.name }}</td>
                         <td>{{ account.program_name }}</td>
+                        <td>{{ account.account_number }}</td>
                         <td>{{ account.current_balance | number }}</td>
                         <td>
                             <nz-tag [nzColor]="account.program_currency_type === 'Milhas' ? 'blue' : 'gold'">

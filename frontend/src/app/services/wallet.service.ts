@@ -7,6 +7,8 @@ import { Observable } from 'rxjs';
 // Interface para a resposta do endpoint de contas de fidelidade
 export interface LoyaltyAccount {
   id: number;
+  name: string;
+  account_number: string;
   wallet: number;
   wallet_name: string;
   program: number;
