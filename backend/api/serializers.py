@@ -36,10 +36,10 @@ class CurrentUserSerializer(serializers.ModelSerializer):
 
 class LoyaltyProgramSerializer(serializers.ModelSerializer):
     created_by_username = serializers.ReadOnlyField(source='created_by.username', allow_null=True)
-
+    get_currency_type_display = serializers.CharField(read_only=True)
     class Meta:
         model = LoyaltyProgram
-        fields = ['id', 'name', 'currency_type', 'is_active', 'is_user_created', 'created_by', 'created_by_username', 'created_at']
+        fields = ['id', 'name', 'currency_type', 'get_currency_type_display','is_active', 'is_user_created', 'created_by', 'created_by_username', 'created_at']
         read_only_fields = ['created_by', 'created_at'] # is_user_created é definido na view/serializer.create
 
     def create(self, validated_data):

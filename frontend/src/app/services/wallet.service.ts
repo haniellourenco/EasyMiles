@@ -7,6 +7,8 @@ import { Observable } from 'rxjs';
 // Interface para a resposta do endpoint de contas de fidelidade
 export interface LoyaltyAccount {
   id: number;
+  name: string;
+  account_number: string;
   wallet: number;
   wallet_name: string;
   program: number;
@@ -80,11 +82,6 @@ export class WalletService {
   // DELETE /api/wallets/{id}/
   deleteWallet(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/wallets/${id}/`);
-  }
-
-  // GET /api/loyalty-programs/
-  getLoyaltyPrograms(): Observable<LoyaltyProgram[]> {
-    return this.http.get<LoyaltyProgram[]>(`${this.apiUrl}/loyalty-programs/`);
   }
 
   // POST /api/wallets/{walletId}/loyalty-accounts/
