@@ -1,5 +1,4 @@
 <div class="page-container">
-    <!-- Cabeçalho -->
     <nz-page-header nzTitle="Programas de Fidelidade" nzSubtitle="Gerencie os programas existentes ou adicione novos">
         <nz-page-header-extra>
             <button nz-button nzType="primary" (click)="showModal()">
@@ -9,23 +8,32 @@
         </nz-page-header-extra>
     </nz-page-header>
 
-    <!-- Tabela -->
     <div class="table-container">
         <nz-table #programTable [nzData]="programs" [nzLoading]="isLoading" nzOuterBordered>
             <thead>
                 <tr>
                     <th>Nome do Programa</th>
-                    <th>Tipo da Moeda</th> <!-- Coluna de Status removida -->
+                    <th>Status</th>
+                    <th>Tipo da Moeda</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let program of programTable.data">
                     <td>{{ program.name }}</td>
-                    <td>{{ program.get_currency_type_display }}</td> <!-- Campo para exibir o tipo -->
                     <td>
-                        <button nz-button nzType="link" nz-popconfirm
-                            nzPopconfirmTitle="Tem certeza que deseja excluir este programa?"
+                        <nz-tag [nzColor]="program.is_active ? 'success' : 'default'">
+                            {{ program.is_active ? 'Ativo' : 'Inativo' }}
+                        </nz-tag>
+                    </td>
+                    <td>{{ program.get_currency_type_display }}</td>
+                    <td>
+                        <button nz-button nzType="default" (click)="toggleStatus(program)">
+                            {{ program.is_active ? 'Desativar' : 'Reativar' }}
+                        </button>
+                        <nz-divider nzType="vertical"></nz-divider>
+                        <button nz-button nzType="link" nzDanger nz-popconfirm
+                            nzPopconfirmTitle="Excluir este programa permanentemente?"
                             (nzOnConfirm)="deleteProgram(program)" [disabled]="!program.is_user_created" nzOkText="Sim"
                             nzCancelText="Não">
                             Excluir
@@ -37,7 +45,6 @@
     </div>
 </div>
 
-<!-- Modal (sem alterações) -->
 <nz-modal [(nzVisible)]="isModalVisible" nzTitle="Adicionar Novo Programa" (nzOnCancel)="handleCancel()"
     (nzOnOk)="handleOk()" [nzOkLoading]="isModalLoading">
     <ng-container *nzModalContent>

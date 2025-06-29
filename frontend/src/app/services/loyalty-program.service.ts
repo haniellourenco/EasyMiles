@@ -8,6 +8,7 @@ export interface LoyaltyProgram {
   currency_type: number;
   get_currency_type_display: string;
   is_user_created: boolean;
+  is_active: boolean;
 }
 
 export interface LoyaltyProgramPayload {
@@ -43,5 +44,12 @@ export class LoyaltyProgramService {
   // DELETE /api/loyalty-programs/{id}/
   deleteLoyaltyProgram(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/loyalty-programs/${id}/`);
+  }
+
+  toggleProgramStatus(id: number): Observable<LoyaltyProgram> {
+    return this.http.patch<LoyaltyProgram>(
+      `${this.apiUrl}/loyalty-programs/${id}/toggle-active/`,
+      {}
+    );
   }
 }

@@ -25,6 +25,7 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzMessageModule } from 'ng-zorro-antd/message';
+import { NzDividerModule } from 'ng-zorro-antd/divider';
 
 @Component({
   selector: 'app-loyalty-programs',
@@ -44,6 +45,7 @@ import { NzMessageModule } from 'ng-zorro-antd/message';
     NzPopconfirmModule,
     NzTagModule,
     NzMessageModule,
+    NzDividerModule,
   ],
   templateUrl: './loyalty-programs.component.html',
   styleUrls: ['./loyalty-programs.component.css'],
@@ -128,6 +130,19 @@ export class LoyaltyProgramsComponent implements OnInit {
 
   handleCancel(): void {
     this.isModalVisible = false;
+  }
+
+  toggleStatus(program: LoyaltyProgram): void {
+    this.loyaltyProgramService.toggleProgramStatus(program.id).subscribe({
+      next: () => {
+        const action = program.is_active ? 'desativado' : 'reativado';
+        this.message.success(`Programa ${action} com sucesso!`);
+        this.loadPrograms(); // Recarrega a lista para refletir a mudança
+      },
+      error: () => {
+        this.message.error('Não foi possível alterar o status do programa.');
+      },
+    });
   }
 
   deleteProgram(program: LoyaltyProgram): void {

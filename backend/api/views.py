@@ -39,52 +39,62 @@ class UserProfileAPIView(generics.RetrieveUpdateAPIView):
 class LoyaltyProgramViewSet(viewsets.ModelViewSet):
     queryset = LoyaltyProgram.objects.all()
     serializer_class = LoyaltyProgramSerializer
-    # permission_classes = [IsAuthenticated] # Default
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'create', 'destroy']:
-            permission_classes = [IsAuthenticated]
-        else: 
-            permission_classes = [IsAdminUser] 
-        return [permission() for permission in permission_classes]
+    permission_classes = [IsAuthenticated] 
 
     def get_queryset(self):
-        # Programas ativos, ou todos se for admin
-        if self.request.user.is_staff:
-            return LoyaltyProgram.objects.all().order_by('name')
-        
-        # Usuários comuns veem programas ativos globais OU os que eles criaram
-        return LoyaltyProgram.objects.filter(
-            Q(is_user_created=False, is_active=True) | 
-            Q(created_by=self.request.user)
-        ).distinct().order_by('name')
+        user = self.request.user
+        if user.is_authenticated:
+            return LoyaltyProgram.objects.filter(
+                Q(is_user_created=False) | Q(created_by=user)
+            ).distinct().order_by('name')
+        return LoyaltyProgram.objects.filter(is_user_created=False).order_by('name')
 
     def perform_create(self, serializer):
         # Atribui o usuário logado ao criar um programa customizado.
         serializer.save(created_by=self.request.user, is_user_created=True)
 
-    def perform_update(self, serializer):
-        instance = serializer.instance
-        # Apenas admin ou o criador (se for user_created) pode atualizar
-        if not self.request.user.is_staff and \
-           (not instance.is_user_created or instance.created_by != self.request.user):
-            self.permission_denied(self.request, message="Você não tem permissão para editar este programa.")
-        serializer.save()
-
-    def perform_destroy(self, instance):
-       
-        if not instance.is_user_created or instance.created_by != self.request.user:
+    @action(detail=True, methods=['patch'], url_path='toggle-active')
+    def toggle_active_status(self, request, pk=None):
+        """
+        Ativa ou desativa um programa de fidelidade e todas as contas associadas.
+        """
+        program = self.get_object()
+        
+        if program.is_user_created and program.created_by == request.user:
+            program.is_active = not program.is_active
+            program.save()
             
-            raise serializers.ValidationError(
-                {"detail": "Você não tem permissão para deletar este programa."}
+            LoyaltyAccount.objects.filter(program=program).update(is_active=program.is_active)
+            
+            serializer = self.get_serializer(program)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+  
+        return Response(
+            {"detail": "Você não tem permissão para alterar o status deste programa."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+      
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        can_delete = instance.is_user_created and instance.created_by == request.user
+        
+        if not can_delete:
+            return Response(
+                {"detail": "Você não tem permissão para deletar este programa."},
+                status=status.HTTP_403_FORBIDDEN
             )
         
         if instance.loyalty_accounts.exists():
-            raise serializers.ValidationError(
-                {"detail": f"Não é possível excluir o programa '{instance.name}' pois existem contas de fidelidade associadas a ele."}
+            return Response(
+                {"detail": f"Não é possível excluir o programa '{instance.name}' pois existem contas de fidelidade associadas a ele."},
+                status=status.HTTP_400_BAD_REQUEST
             )
         
-        instance.delete()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserWalletViewSet(viewsets.ModelViewSet):
@@ -107,9 +117,9 @@ class LoyaltyAccountViewSet(viewsets.ModelViewSet):
             wallet_pk = self.kwargs['wallet_pk']
             # Garante que a carteira (wallet_pk) pertence ao usuário logado
             get_object_or_404(UserWallet, pk=wallet_pk, user=user)
-            return LoyaltyAccount.objects.filter(wallet_id=wallet_pk, wallet__user=user).select_related('program', 'wallet').order_by('name')
+            return LoyaltyAccount.objects.filter(wallet_id=wallet_pk, wallet__user=user,is_active=True).select_related('program', 'wallet').order_by('name')
         # Se não aninhado, lista todas as contas de todas as carteiras do usuário
-        return LoyaltyAccount.objects.filter(wallet__user=user).select_related('program', 'wallet').order_by('wallet__wallet_name', 'name')
+        return LoyaltyAccount.objects.filter(wallet__user=user,is_active=True).select_related('program', 'wallet').order_by('wallet__wallet_name', 'name')
 
     def perform_create(self, serializer):
         user = self.request.user
