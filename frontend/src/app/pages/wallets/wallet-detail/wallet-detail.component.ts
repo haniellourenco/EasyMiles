@@ -16,6 +16,7 @@ import {
 } from '../../../services/wallet.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { forkJoin } from 'rxjs';
+import { LoyaltyProgramService } from '../../../services/loyalty-program.service';
 
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -71,7 +72,8 @@ export class WalletDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private walletService: WalletService,
     private message: NzMessageService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private loyaltyProgramService: LoyaltyProgramService
   ) {}
 
   ngOnInit(): void {
@@ -94,7 +96,7 @@ export class WalletDetailComponent implements OnInit {
     forkJoin({
       wallet: this.walletService.getWalletById(id),
       accounts: this.walletService.getLoyaltyAccounts(id),
-      programs: this.walletService.getLoyaltyPrograms(),
+      programs: this.loyaltyProgramService.getLoyaltyPrograms(),
     }).subscribe({
       next: (result) => {
         this.wallet = result.wallet;
