@@ -1,0 +1,10 @@
+.page-container {
+  padding: 24px;
+}
+
+.table-container {
+  margin-top: 24px;
+  background-color: #fff;
+  padding: 24px;
+  border-radius: 8px;
+}
