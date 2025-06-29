@@ -1,0 +1,73 @@
+<nz-layout class="app-layout">
+    <!-- Sider (Menu Lateral) com todos os seus itens -->
+    <nz-sider class="menu-sidebar" nzCollapsible nzWidth="256px" nzBreakpoint="md" [(nzCollapsed)]="isCollapsed"
+        [nzTrigger]="null">
+        <div class="sidebar-logo">
+            <h2>EasyMiles</h2>
+        </div>
+        <ul nz-menu nzTheme="light" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
+            <li nz-menu-item routerLinkActive="ant-menu-item-selected">
+                <i nz-icon nzType="dashboard"></i>
+                <span><a routerLink="/dashboard">Painel de controle</a></span>
+            </li>
+            <li nz-menu-item routerLinkActive="ant-menu-item-selected">
+                <i nz-icon nzType="wallet"></i>
+                <span><a routerLink="/wallets">Carteiras</a></span>
+            </li>
+            <li nz-menu-item routerLinkActive="ant-menu-item-selected">
+                <i nz-icon nzType="star"></i>
+                <span><a routerLink="/loyalty-programs">Programas de fidelidade</a></span>
+            </li>
+            <li nz-menu-item routerLinkActive="ant-menu-item-selected">
+                <i nz-icon nzType="credit-card"></i>
+                <span><a routerLink="/add-transaction">Adicionar transação</a></span>
+            </li>
+            <li nz-menu-item routerLinkActive="ant-menu-item-selected">
+                <i nz-icon nzType="history"></i>
+                <span><a routerLink="/transaction-history">Histórico de transações</a></span>
+            </li>
+            <li nz-menu-item routerLinkActive="ant-menu-item-selected">
+                <i nz-icon nzType="setting"></i>
+                <span><a routerLink="/settings">Configurações</a></span>
+            </li>
+        </ul>
+    </nz-sider>
+
+
+    <nz-layout>
+        <nz-header>
+            <div class="app-header">
+
+                <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
+                    <i class="trigger" nz-icon [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"></i>
+                </span>
+
+
+                <div class="header-right" *ngIf="user">
+
+                    <a nz-dropdown [nzDropdownMenu]="userMenu" nzPlacement="bottomRight" [nzTrigger]="'click'">
+                        <nz-avatar nzIcon="user" style="background-color: #1890ff"></nz-avatar>
+                        <span class="user-name">{{ user.first_name || user.username }}</span>
+                    </a>
+                    <nz-dropdown-menu #userMenu="nzDropdownMenu">
+                        <ul nz-menu>
+                            <li nz-menu-item>
+                                <i nz-icon nzType="user" class="action-icon"></i> Perfil
+                            </li>
+                            <li nz-menu-divider></li>
+                            <li nz-menu-item (click)="logout()">
+                                <i nz-icon nzType="logout" class="action-icon"></i> Sair
+                            </li>
+                        </ul>
+                    </nz-dropdown-menu>
+                </div>
+            </div>
+        </nz-header>
+
+        <nz-content>
+            <div class="inner-content">
+                <router-outlet></router-outlet>
+            </div>
+        </nz-content>
+    </nz-layout>
+</nz-layout>
