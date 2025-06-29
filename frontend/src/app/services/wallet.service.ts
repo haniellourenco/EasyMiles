@@ -84,11 +84,6 @@ export class WalletService {
     return this.http.delete<void>(`${this.apiUrl}/wallets/${id}/`);
   }
 
-  // GET /api/loyalty-programs/
-  getLoyaltyPrograms(): Observable<LoyaltyProgram[]> {
-    return this.http.get<LoyaltyProgram[]>(`${this.apiUrl}/loyalty-programs/`);
-  }
-
   // POST /api/wallets/{walletId}/loyalty-accounts/
   createLoyaltyAccount(
     walletId: number,

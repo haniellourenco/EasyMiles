@@ -1,0 +1,69 @@
+<div class="page-container">
+    <nz-page-header nzTitle="Programas de Fidelidade" nzSubtitle="Gerencie os programas existentes ou adicione novos">
+        <nz-page-header-extra>
+            <button nz-button nzType="primary" (click)="showModal()">
+                <i nz-icon nzType="plus"></i>
+                Adicionar Programa
+            </button>
+        </nz-page-header-extra>
+    </nz-page-header>
+
+    <div class="table-container">
+        <nz-table #programTable [nzData]="programs" [nzLoading]="isLoading" nzOuterBordered>
+            <thead>
+                <tr>
+                    <th>Nome do Programa</th>
+                    <th>Status</th>
+                    <th>Tipo da Moeda</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let program of programTable.data">
+                    <td>{{ program.name }}</td>
+                    <td>
+                        <nz-tag [nzColor]="program.is_active ? 'success' : 'default'">
+                            {{ program.is_active ? 'Ativo' : 'Inativo' }}
+                        </nz-tag>
+                    </td>
+                    <td>{{ program.get_currency_type_display }}</td>
+                    <td>
+                        <button nz-button nzType="default" (click)="toggleStatus(program)">
+                            {{ program.is_active ? 'Desativar' : 'Reativar' }}
+                        </button>
+                        <nz-divider nzType="vertical"></nz-divider>
+                        <button nz-button nzType="link" nzDanger nz-popconfirm
+                            nzPopconfirmTitle="Excluir este programa permanentemente?"
+                            (nzOnConfirm)="deleteProgram(program)" [disabled]="!program.is_user_created" nzOkText="Sim"
+                            nzCancelText="Não">
+                            Excluir
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </nz-table>
+    </div>
+</div>
+
+<nz-modal [(nzVisible)]="isModalVisible" nzTitle="Adicionar Novo Programa" (nzOnCancel)="handleCancel()"
+    (nzOnOk)="handleOk()" [nzOkLoading]="isModalLoading">
+    <ng-container *nzModalContent>
+        <form nz-form [formGroup]="programForm" nzLayout="vertical">
+            <nz-form-item>
+                <nz-form-label nzRequired>Nome do Programa</nz-form-label>
+                <nz-form-control nzErrorTip="Por favor, insira um nome.">
+                    <input nz-input formControlName="name" placeholder="Ex: Esfera" />
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label nzRequired>Tipo da Moeda</nz-form-label>
+                <nz-form-control nzErrorTip="Por favor, selecione um tipo.">
+                    <nz-select formControlName="currency_type" nzPlaceHolder="Selecione">
+                        <nz-option *ngFor="let type of currencyTypes" [nzValue]="type.value"
+                            [nzLabel]="type.label"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </form>
+    </ng-container>
+</nz-modal>

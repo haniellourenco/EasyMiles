@@ -1,5 +1,4 @@
-# backend - Copia/api/views.py
-from rest_framework import viewsets, status, generics, views
+from rest_framework import viewsets, status, generics, views, serializers
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -9,6 +8,7 @@ from django.db import transaction as db_transaction
 from django.db.models import Sum, Avg, F, Q, Case, When, Value, DecimalField, Count
 from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP
+
 
 from .models import LoyaltyProgram, UserWallet, LoyaltyAccount, PointsTransaction
 from .serializers import (
@@ -39,68 +39,62 @@ class UserProfileAPIView(generics.RetrieveUpdateAPIView):
 class LoyaltyProgramViewSet(viewsets.ModelViewSet):
     queryset = LoyaltyProgram.objects.all()
     serializer_class = LoyaltyProgramSerializer
-    # permission_classes = [IsAuthenticated] # Default
-
-    def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        GET, LIST, RETRIEVE: IsAuthenticated
-        CREATE, UPDATE, PARTIAL_UPDATE, DESTROY: IsAdminUser (ou lógica customizada para criador)
-        """
-        if self.action in ['list', 'retrieve']:
-            permission_classes = [IsAuthenticated]
-        elif self.action == 'create': # Permitir usuários criarem programas marcados como "is_user_created"
-            permission_classes = [IsAuthenticated]
-        else: # Apenas Admin pode modificar/deletar programas globais ou de outros usuários
-            permission_classes = [IsAdminUser] # Ou uma permissão customizada mais granular
-        return [permission() for permission in permission_classes]
-
+    permission_classes = [IsAuthenticated] 
 
     def get_queryset(self):
-        # Programas ativos, ou todos se for admin
-        if self.request.user.is_staff:
-            return LoyaltyProgram.objects.all().order_by('name')
-        
-        # Usuários comuns veem programas ativos globais OU os que eles criaram
-        return LoyaltyProgram.objects.filter(
-            Q(is_active=True, is_user_created=False) | 
-            Q(created_by=self.request.user)
-        ).distinct().order_by('name')
+        user = self.request.user
+        if user.is_authenticated:
+            return LoyaltyProgram.objects.filter(
+                Q(is_user_created=False) | Q(created_by=user)
+            ).distinct().order_by('name')
+        return LoyaltyProgram.objects.filter(is_user_created=False).order_by('name')
 
     def perform_create(self, serializer):
-        # Serializer já trata `created_by` e `is_user_created` com base no payload.
-        # Se `is_user_created` for True, o serializer (ou a view aqui) deve atribuir o `request.user`.
-        # Programas "padrão" (is_user_created=False) só podem ser criados por admins.
-        is_user_created_payload = serializer.validated_data.get('is_user_created', False)
-        if is_user_created_payload:
-            serializer.save(created_by=self.request.user, is_user_created=True)
-        else:
-            if not self.request.user.is_staff:
-                self.permission_denied(
-                    self.request, message="Apenas administradores podem criar programas globais."
-                )
-            serializer.save(created_by=None, is_user_created=False)
+        # Atribui o usuário logado ao criar um programa customizado.
+        serializer.save(created_by=self.request.user, is_user_created=True)
 
-    def perform_update(self, serializer):
-        instance = serializer.instance
-        # Apenas admin ou o criador (se for user_created) pode atualizar
-        if not self.request.user.is_staff and \
-           (not instance.is_user_created or instance.created_by != self.request.user):
-            self.permission_denied(self.request, message="Você não tem permissão para editar este programa.")
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        # Apenas admin ou o criador (se for user_created) pode deletar
-        # `on_delete=models.PROTECT` em LoyaltyAccount.program já protege se houver contas.
-        if not self.request.user.is_staff and \
-           (not instance.is_user_created or instance.created_by != self.request.user):
-            self.permission_denied(self.request, message="Você não tem permissão para deletar este programa.")
+    @action(detail=True, methods=['patch'], url_path='toggle-active')
+    def toggle_active_status(self, request, pk=None):
+        """
+        Ativa ou desativa um programa de fidelidade e todas as contas associadas.
+        """
+        program = self.get_object()
         
-        if instance.loyalty_accounts.exists(): # Verifica se há LoyaltyAccounts associadas
-             raise serializers.ValidationError(
-                 {"detail": f"Não é possível excluir o programa '{instance.name}' pois existem contas de fidelidade associadas a ele."}
-             )
-        instance.delete()
+        if program.is_user_created and program.created_by == request.user:
+            program.is_active = not program.is_active
+            program.save()
+            
+            LoyaltyAccount.objects.filter(program=program).update(is_active=program.is_active)
+            
+            serializer = self.get_serializer(program)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+  
+        return Response(
+            {"detail": "Você não tem permissão para alterar o status deste programa."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+      
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        can_delete = instance.is_user_created and instance.created_by == request.user
+        
+        if not can_delete:
+            return Response(
+                {"detail": "Você não tem permissão para deletar este programa."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if instance.loyalty_accounts.exists():
+            return Response(
+                {"detail": f"Não é possível excluir o programa '{instance.name}' pois existem contas de fidelidade associadas a ele."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserWalletViewSet(viewsets.ModelViewSet):
@@ -123,9 +117,9 @@ class LoyaltyAccountViewSet(viewsets.ModelViewSet):
             wallet_pk = self.kwargs['wallet_pk']
             # Garante que a carteira (wallet_pk) pertence ao usuário logado
             get_object_or_404(UserWallet, pk=wallet_pk, user=user)
-            return LoyaltyAccount.objects.filter(wallet_id=wallet_pk, wallet__user=user).select_related('program', 'wallet').order_by('name')
+            return LoyaltyAccount.objects.filter(wallet_id=wallet_pk, wallet__user=user,is_active=True).select_related('program', 'wallet').order_by('name')
         # Se não aninhado, lista todas as contas de todas as carteiras do usuário
-        return LoyaltyAccount.objects.filter(wallet__user=user).select_related('program', 'wallet').order_by('wallet__wallet_name', 'name')
+        return LoyaltyAccount.objects.filter(wallet__user=user,is_active=True).select_related('program', 'wallet').order_by('wallet__wallet_name', 'name')
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -143,8 +137,7 @@ class LoyaltyAccountViewSet(viewsets.ModelViewSet):
         account_instance = serializer.instance
         if account_instance.wallet.user != self.request.user:
             self.permission_denied(self.request, message="Você não tem permissão para editar esta conta.")
-        # Atualiza last_updated se o payload não o especificar ou se um campo crítico mudar.
-        # A maneira mais simples é sempre atualizar ou confiar no payload.
+
         serializer.save(last_updated=serializer.validated_data.get('last_updated', timezone.now()))
 
 
@@ -172,23 +165,17 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 
     @db_transaction.atomic
     def perform_create(self, serializer):
-        # Validação de propriedade das contas já ocorre no serializer.
         transaction = serializer.save()
         self._apply_transaction_effects(transaction)
 
     @db_transaction.atomic
     def perform_update(self, serializer):
-        # Atualizar uma transação é complexo devido ao impacto nos saldos e custos.
-        # Idealmente, estorna-se a antiga e cria-se uma nova.
-        # Se for permitido, deve-se reverter os efeitos da transação original
-        # e aplicar os efeitos da transação atualizada.
+        
         
         # Garante que a transação pertence ao usuário (indiretamente, via contas)
-        original_instance = self.get_object() # serializer.instance pode ser o estado *antes* do save parcial.
+        original_instance = self.get_object() 
         self._ensure_transaction_ownership(original_instance, self.request.user)
 
-        # Salva o estado antigo para reverter (simplificado)
-        # É melhor buscar o objeto do BD para ter certeza do estado antes da validação do serializer.
         old_transaction_state = PointsTransaction.objects.get(pk=original_instance.pk)
         
         # Reverte efeitos da transação no estado *antes* do save do serializer.
@@ -218,7 +205,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
             self.permission_denied(self.request, message="Você não tem permissão para modificar esta transação.")
 
     def _apply_transaction_effects(self, transaction: PointsTransaction):
-        """Aplica os efeitos de uma transação aos saldos e custos médios das contas."""
         ttype = transaction.transaction_type
         amount = abs(transaction.amount) # Garante que o montante é positivo
         transaction_cost = transaction.cost if transaction.cost is not None else Decimal('0.00')
@@ -317,12 +303,7 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 
 
     def _reverse_transaction_effects(self, transaction: PointsTransaction):
-        """
-        Reverte os efeitos de saldo de uma transação.
-        AVISO: Reverter o custo médio com precisão histórica é muito complexo e
-        geralmente requer conhecimento do estado anterior ou recálculo completo.
-        Esta função foca em reverter o saldo.
-        """
+        
         ttype = transaction.transaction_type
         amount = abs(transaction.amount)
         # transaction_cost = transaction.cost if transaction.cost is not None else Decimal('0.00')
@@ -333,7 +314,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
             acc.current_balance -= amount
             acc.last_updated = timezone.now()
             acc.save()
-            # Reverter average_cost é complexo. Idealmente, não se deleta transações que afetam custo.
 
         # Tipo 2: Transferência -> Creditar origin, Debitar destination
         elif ttype == 2 and transaction.origin_account and transaction.destination_account:
@@ -377,7 +357,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 
 class SimulationViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
-    # Mapeamento para documentação automática (ex: drf-spectacular)
     serializer_action_classes = {
         'transfer': SimulateTransferSerializer,
         'sale': SimulateSaleSerializer,
