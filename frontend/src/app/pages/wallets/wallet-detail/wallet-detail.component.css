@@ -18,3 +18,7 @@ nz-page-header {
   align-items: center;
   height: 200px;
 }
+
+.full-width {
+  width: 100%;
+}

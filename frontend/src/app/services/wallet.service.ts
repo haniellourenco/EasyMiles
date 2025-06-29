@@ -16,6 +16,20 @@ export interface LoyaltyAccount {
   average_cost: string;
 }
 
+export interface LoyaltyProgram {
+  id: number;
+  name: string;
+}
+
+// Interface para o CORPO da requisição de criação de conta
+export interface LoyaltyAccountPayload {
+  program: number;
+  account_number: string;
+  name: string;
+  current_balance: number;
+  average_cost: number;
+}
+
 // Interface para a resposta do endpoint de uma única carteira (sem as contas)
 export interface Wallet {
   id: number;
@@ -66,5 +80,21 @@ export class WalletService {
   // DELETE /api/wallets/{id}/
   deleteWallet(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/wallets/${id}/`);
+  }
+
+  // GET /api/loyalty-programs/
+  getLoyaltyPrograms(): Observable<LoyaltyProgram[]> {
+    return this.http.get<LoyaltyProgram[]>(`${this.apiUrl}/loyalty-programs/`);
+  }
+
+  // POST /api/wallets/{walletId}/loyalty-accounts/
+  createLoyaltyAccount(
+    walletId: number,
+    payload: LoyaltyAccountPayload
+  ): Observable<LoyaltyAccount> {
+    return this.http.post<LoyaltyAccount>(
+      `${this.apiUrl}/wallets/${walletId}/loyalty-accounts/`,
+      payload
+    );
   }
 }
