@@ -1,0 +1,32 @@
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  background-color: #f0f2f5;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 450px;
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.register-header h2 {
+  font-size: 24px;
+  color: #333;
+}
+
+.register-form-button {
+  width: 100%;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 16px;
+}

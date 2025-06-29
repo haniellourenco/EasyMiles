@@ -1,0 +1,73 @@
+<div class="register-container">
+    <div class="register-card">
+        <nz-card>
+            <div class="register-header">
+                <h2>Criar Conta no EasyMiles</h2>
+                <p>É rápido e fácil.</p>
+            </div>
+
+            <form nz-form [formGroup]="registerForm" class="register-form" (ngSubmit)="submitForm()">
+                <div nz-row [nzGutter]="16">
+                    <div nz-col [nzSpan]="12">
+                        <nz-form-item>
+                            <nz-form-control nzErrorTip="Por favor, insira seu nome!">
+                                <nz-input-group>
+                                    <input type="text" nz-input formControlName="first_name" placeholder="Nome" />
+                                </nz-input-group>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </div>
+                    <div nz-col [nzSpan]="12">
+                        <nz-form-item>
+                            <nz-form-control nzErrorTip="Por favor, insira seu sobrenome!">
+                                <nz-input-group>
+                                    <input type="text" nz-input formControlName="last_name" placeholder="Sobrenome" />
+                                </nz-input-group>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </div>
+                </div>
+
+                <nz-form-item>
+                    <nz-form-control nzErrorTip="Por favor, insira um nome de usuário!">
+                        <nz-input-group nzPrefixIcon="user">
+                            <input type="text" nz-input formControlName="username" placeholder="Nome de usuário" />
+                        </nz-input-group>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item>
+                    <nz-form-control nzErrorTip="Por favor, insira um e-mail válido!">
+                        <nz-input-group nzPrefixIcon="mail">
+                            <input type="email" nz-input formControlName="email" placeholder="E-mail" />
+                        </nz-input-group>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item>
+                    <nz-form-control nzErrorTip="A senha deve ter no mínimo 6 caracteres.">
+                        <nz-input-group nzPrefixIcon="lock">
+                            <input type="password" nz-input formControlName="password" placeholder="Senha" />
+                        </nz-input-group>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item>
+                    <nz-form-control nzErrorTip="As senhas não conferem!">
+                        <nz-input-group nzPrefixIcon="lock">
+                            <input type="password" nz-input formControlName="confirmPassword"
+                                placeholder="Confirme a senha" />
+                        </nz-input-group>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <button nz-button class="register-form-button" [nzType]="'primary'" [nzLoading]="isLoading">
+                    Criar Conta
+                </button>
+                <div class="login-link">
+                    Já tem uma conta? <a routerLink="/login">Faça o login!</a>
+                </div>
+            </form>
+        </nz-card>
+    </div>
+</div>

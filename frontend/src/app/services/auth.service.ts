@@ -17,6 +17,15 @@ export interface UserProfile {
   last_name: string;
   cpf: string;
 }
+// corpo da requisição de registro
+export interface RegisterPayload {
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  password?: string;
+  password2?: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +39,9 @@ export class AuthService {
 
   constructor(private http: HttpClient, private router: Router) {}
 
+  register(payload: RegisterPayload): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/users/register/`, payload);
+  }
   login(credentials: any): Observable<UserProfile> {
     return this.http
       .post<AuthResponse>(`${this.apiUrl}/auth/token/`, credentials)
