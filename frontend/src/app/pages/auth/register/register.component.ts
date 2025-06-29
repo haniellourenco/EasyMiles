@@ -12,7 +12,6 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService, RegisterPayload } from '../../../services/auth.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 
-// Imports Standalone
 import { CommonModule } from '@angular/common';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -96,7 +95,7 @@ export class RegisterComponent implements OnInit {
           );
           this.router.navigate(['/login']);
         },
-        error: (err) => {
+        error: (err: any) => {
           console.error('Erro no registro', err);
           const errorMessage =
             err.error?.email?.[0] ||

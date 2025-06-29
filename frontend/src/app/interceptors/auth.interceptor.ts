@@ -1,19 +1,51 @@
-// src/app/interceptors/auth.interceptor.ts
-import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import {
+  HttpRequest,
+  HttpHandlerFn,
+  HttpInterceptorFn,
+  HttpErrorResponse,
+} from '@angular/common/http';
+import { AuthService } from '../services/auth.service';
+import { catchError, switchMap, throwError } from 'rxjs';
+
+function addTokenHeader(request: HttpRequest<any>, token: string) {
+  return request.clone({
+    headers: request.headers.set('Authorization', `Bearer ${token}`),
+  });
+}
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  // Pega o token do localStorage. Usaremos a chave 'auth_token'.
-  const authToken = localStorage.getItem('auth_token');
+  const authService = inject(AuthService);
+  const accessToken = authService.getAccessToken();
 
-  // Se o token existir, clona a requisição e adiciona o cabeçalho de autorização.
-  if (authToken) {
-    const clonedReq = req.clone({
-      headers: req.headers.set('Authorization', `Bearer ${authToken}`),
-    });
-    // Passa a requisição CLONADA com o novo cabeçalho para a próxima etapa.
-    return next(clonedReq);
+  // Anexa o token de acesso se ele existir
+  if (accessToken) {
+    req = addTokenHeader(req, accessToken);
   }
 
-  // Se não houver token, simplesmente deixa a requisição original seguir seu caminho.
-  return next(req);
+  return next(req).pipe(
+    catchError((error: any) => {
+      // Se o erro for 401 e a URL não for a de login ou refresh...
+      if (
+        error instanceof HttpErrorResponse &&
+        error.status === 401 &&
+        !req.url.includes('/auth/token/')
+      ) {
+        // Tenta atualizar o token
+        return authService.refreshToken().pipe(
+          switchMap((tokens) => {
+            // Tenta refazer a requisição original com o novo token
+            return next(addTokenHeader(req, tokens.access));
+          }),
+          catchError((err) => {
+            // Se o refresh falhar, o authService já deslogou o usuário.
+
+            return throwError(() => err);
+          })
+        );
+      }
+
+      return throwError(() => error);
+    })
+  );
 };
