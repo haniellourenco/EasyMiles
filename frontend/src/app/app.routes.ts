@@ -4,6 +4,7 @@ import { RegisterComponent } from './pages/auth/register/register.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { LoyaltyProgramsComponent } from './pages/loyalty-programs/loyalty-programs.component';
 import { SettingsComponent } from './pages/settings/settings.component';
+import { AddTransactionComponent } from './pages/add-transaction/add-transaction.component';
 
 import { authGuard } from './guards/auth.guard';
 
@@ -32,6 +33,10 @@ export const routes: Routes = [
       {
         path: 'loyalty-programs',
         component: LoyaltyProgramsComponent,
+      },
+      {
+        path: 'add-transaction',
+        component: AddTransactionComponent,
       },
       {
         path: 'settings',

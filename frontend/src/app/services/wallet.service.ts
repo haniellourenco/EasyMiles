@@ -62,6 +62,11 @@ export class WalletService {
     return this.http.get<Wallet>(`${this.apiUrl}/wallets/${id}/`);
   }
 
+  // GET /api/loyalty-accounts/
+  getAllLoyaltyAccounts(): Observable<LoyaltyAccount[]> {
+    return this.http.get<LoyaltyAccount[]>(`${this.apiUrl}/loyalty-accounts/`);
+  }
+
   // GET /api/wallets/{wallet_id}/loyalty-accounts/
   getLoyaltyAccounts(walletId: number): Observable<LoyaltyAccount[]> {
     return this.http.get<LoyaltyAccount[]>(
