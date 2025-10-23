@@ -209,8 +209,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
         amount = abs(transaction.amount) # Garante que o montante é positivo
         transaction_cost = transaction.cost if transaction.cost is not None else Decimal('0.00')
 
-        DECIMAL_CONTEXT = {"prec": 10, "rounding": ROUND_HALF_UP} # Precisão para cálculos intermediários
-
         # Tipo 1: Inclusão Manual (Crédito)
         if ttype == 1 and transaction.destination_account:
             acc = transaction.destination_account
@@ -222,13 +220,9 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
             if transaction_cost > 0 and amount > 0: # Houve um custo para adquirir estes pontos
                 current_total_value = old_balance * old_avg_cost
                 new_total_value = current_total_value + transaction_cost
-                acc.average_cost = (new_total_value / acc.current_balance).quantize(Decimal('0.0001'), context=DECIMAL_CONTEXT) if acc.current_balance > 0 else Decimal('0.0000')
+                acc.average_cost = (new_total_value / acc.current_balance).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) if acc.current_balance > 0 else Decimal('0.0000')
             elif old_balance == 0 and acc.current_balance > 0 and transaction_cost == 0 : # Primeira entrada sem custo, custo médio = 0
                  acc.average_cost = Decimal('0.0000')
-            # Se não houver custo e já existir saldo com custo, o custo médio se dilui (mas o valor total não muda)
-            # Se transaction_cost == 0 e amount > 0 e old_balance > 0 e old_avg_cost > 0:
-            #   current_total_value = old_balance * old_avg_cost
-            #   acc.average_cost = (current_total_value / acc.current_balance).quantize(Decimal('0.0001')) if acc.current_balance > 0 else Decimal('0.0000')
 
             acc.last_updated = timezone.now()
             acc.save()
@@ -240,7 +234,7 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
             bonus_perc = transaction.bonus_percentage if transaction.bonus_percentage is not None else Decimal('0.00')
             
             amount_credited_to_dest = amount * (Decimal('1.00') + (bonus_perc / Decimal('100.00')))
-            amount_credited_to_dest = amount_credited_to_dest.quantize(Decimal('0.01'), context=DECIMAL_CONTEXT)
+            amount_credited_to_dest = amount_credited_to_dest.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 
             # Debita da origem
@@ -260,7 +254,7 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
             current_total_value_dest = old_balance_dest * old_avg_cost_dest
             new_total_value_dest = current_total_value_dest + value_added_to_dest
             
-            dest_acc.average_cost = (new_total_value_dest / dest_acc.current_balance).quantize(Decimal('0.0001'), context=DECIMAL_CONTEXT) if dest_acc.current_balance > 0 else Decimal('0.0000')
+            dest_acc.average_cost = (new_total_value_dest / dest_acc.current_balance).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) if dest_acc.current_balance > 0 else Decimal('0.0000')
             dest_acc.last_updated = timezone.now()
             dest_acc.save()
 
@@ -268,15 +262,11 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
         elif ttype in [3, 4, 5] and transaction.origin_account:
             acc = transaction.origin_account
             acc.current_balance -= amount
-            # Custo médio dos pontos restantes não muda. O "custo" da operação é (amount * avg_cost).
-            # Para "Venda" (tipo 4), transaction.cost representa o VALOR DA VENDA. Lucro = transaction.cost - (amount * acc.average_cost).
             acc.last_updated = timezone.now()
             acc.save()
         
         # Tipo 6: Ajuste de Saldo
         elif ttype == 6:
-            # O serializer garante que ou origin_account ou destination_account (não ambos) é fornecido.
-            # O `amount` é sempre positivo. O `transaction.cost` pode representar um custo para fazer o ajuste.
             if transaction.destination_account: # Ajuste de Crédito
                 acc = transaction.destination_account
                 old_balance = acc.current_balance
@@ -286,18 +276,16 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
                 if transaction_cost > 0 and amount > 0: # Custo para realizar o ajuste de crédito
                     current_total_value = old_balance * old_avg_cost
                     new_total_value = current_total_value + transaction_cost
-                    acc.average_cost = (new_total_value / acc.current_balance).quantize(Decimal('0.0001'), context=DECIMAL_CONTEXT) if acc.current_balance > 0 else Decimal('0.0000')
-                # Se não houver custo e já existir saldo com custo, o custo médio se dilui.
+                    acc.average_cost = (new_total_value / acc.current_balance).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) if acc.current_balance > 0 else Decimal('0.0000')
                 elif old_balance > 0 and old_avg_cost > 0 and transaction_cost == 0:
                      current_total_value = old_balance * old_avg_cost
-                     acc.average_cost = (current_total_value / acc.current_balance).quantize(Decimal('0.0001'), context=DECIMAL_CONTEXT) if acc.current_balance > 0 else Decimal('0.0000')
+                     acc.average_cost = (current_total_value / acc.current_balance).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) if acc.current_balance > 0 else Decimal('0.0000')
 
                 acc.last_updated = timezone.now()
                 acc.save()
             elif transaction.origin_account: # Ajuste de Débito
                 acc = transaction.origin_account
                 acc.current_balance -= amount
-                # Custo médio não muda por um simples ajuste de débito sem valor financeiro associado ao ajuste em si.
                 acc.last_updated = timezone.now()
                 acc.save()
 
