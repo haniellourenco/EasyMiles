@@ -1,0 +1,111 @@
+<div class="page-container">
+    <nz-page-header nzTitle="Adicionar Transação" nzSubtitle="Registre uma nova movimentação de pontos ou milhas">
+    </nz-page-header>
+
+    <div class="form-container">
+        <nz-spin [nzSpinning]="isLoading">
+            <nz-card>
+                <form nz-form [formGroup]="transactionForm" (ngSubmit)="submitForm()">
+                    <nz-form-item>
+                        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>Tipo de Transação</nz-form-label>
+                        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Por favor, selecione o tipo da transação.">
+                            <nz-select formControlName="transaction_type" nzPlaceHolder="Selecione o tipo">
+                                <nz-option *ngFor="let type of transactionTypes" [nzValue]="type.value"
+                                    [nzLabel]="type.label"></nz-option>
+                            </nz-select>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item *ngIf="[2, 3, 4, 5, 6].includes(transactionForm.get('transaction_type')?.value)">
+                        <nz-form-label [nzSm]="6" [nzXs]="24"
+                            [nzRequired]="[2, 3, 4, 5].includes(transactionForm.get('transaction_type')?.value)">
+                            Conta de Origem
+                        </nz-form-label>
+                        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Selecione a conta de origem.">
+                            <nz-select formControlName="origin_account"
+                                nzPlaceHolder="Selecione a conta de onde os pontos saíram" nzShowSearch>
+                                <nz-option *ngFor="let acc of accounts" [nzValue]="acc.id"
+                                    [nzLabel]="acc.name + ' (' + acc.program_name + ')'"></nz-option>
+                            </nz-select>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item *ngIf="[1, 2, 6].includes(transactionForm.get('transaction_type')?.value)">
+                        <nz-form-label [nzSm]="6" [nzXs]="24"
+                            [nzRequired]="[1, 2].includes(transactionForm.get('transaction_type')?.value)">
+                            Conta de Destino
+                        </nz-form-label>
+                        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Selecione a conta de destino.">
+                            <nz-select formControlName="destination_account"
+                                nzPlaceHolder="Selecione a conta para onde os pontos foram" nzShowSearch>
+                                <nz-option *ngFor="let acc of accounts" [nzValue]="acc.id"
+                                    [nzLabel]="acc.name + ' (' + acc.program_name + ')'"></nz-option>
+                            </nz-select>
+                            <div nz-form-explain *ngIf="transactionForm.hasError('sameAccount')">
+                                A conta de destino não pode ser a mesma que a de origem.
+                            </div>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item *ngIf="transactionForm.get('transaction_type')?.value === 2">
+                        <nz-form-label [nzSm]="6" [nzXs]="24">Bônus (%)</nz-form-label>
+                        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="O bônus deve ser um valor positivo.">
+                            <nz-input-number formControlName="bonus_percentage" [nzMin]="0" [nzStep]="10"
+                                class="full-width"></nz-input-number>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-row [nzGutter]="16">
+                        <nz-col [nzSm]="12" [nzXs]="24">
+                            <nz-form-item>
+                                <nz-form-label [nzSm]="12" [nzXs]="24" nzRequired>Quantidade</nz-form-label>
+                                <nz-form-control [nzSm]="24" [nzXs]="24"
+                                    nzErrorTip="Insira a quantidade de pontos/milhas.">
+                                    <nz-input-number formControlName="amount" [nzMin]="0.01" [nzStep]="1000"
+                                        class="full-width"></nz-input-number>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                        <nz-col [nzSm]="12" [nzXs]="24">
+                            <nz-form-item>
+                                <nz-form-label [nzSm]="12" [nzXs]="24">
+                                    {{ transactionForm.get('transaction_type')?.value === 4 ? 'Valor Recebido (R$)' :
+                                    'Custo (R$)' }}
+                                </nz-form-label>
+                                <nz-form-control [nzSm]="24" [nzXs]="24" nzErrorTip="Insira um valor válido.">
+                                    <nz-input-number formControlName="cost" [nzMin]="0" [nzStep]="10" class="full-width"
+                                        [nzPrecision]="2"></nz-input-number>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+
+                    <nz-form-item>
+                        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>Data da Transação</nz-form-label>
+                        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Selecione a data.">
+                            <nz-date-picker formControlName="transaction_date" class="full-width"></nz-date-picker>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label [nzSm]="6" [nzXs]="24">Descrição</nz-form-label>
+                        <nz-form-control [nzSm]="14" [nzXs]="24">
+                            <textarea nz-input formControlName="description"
+                                placeholder="Ex: Compra bonificada na Magazine Luiza"
+                                [nzAutosize]="{ minRows: 2, maxRows: 4 }"></textarea>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-control [nzSm]="14" [nzXs]="24" [nzOffset]="6">
+                            <button nz-button nzType="primary" [nzLoading]="isSubmitting"
+                                [disabled]="!transactionForm.valid">
+                                Registrar Transação
+                            </button>
+                        </nz-form-control>
+                    </nz-form-item>
+                </form>
+            </nz-card>
+        </nz-spin>
+    </div>
+</div>
