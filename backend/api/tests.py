@@ -28,25 +28,27 @@ def create_user(django_user_model):
     return _create_user
 
 @pytest.fixture
-def authenticated_api_client(api_client, create_user):
-    user = create_user()
+def authenticated_api_client(create_user): 
+    user = create_user(username='testuser', password='password123')
+    client = APIClient() 
     from rest_framework_simplejwt.tokens import RefreshToken
     refresh = RefreshToken.for_user(user)
-    api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
-    api_client.user = user
-    return api_client
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+    client.user = user 
+    return client
 
 @pytest.fixture
 def another_user(create_user):
     return create_user(username='otheruser', password='password456')
 
 @pytest.fixture
-def authenticated_api_client_other(api_client, another_user):
+def authenticated_api_client_other(another_user): 
+    client = APIClient() 
     from rest_framework_simplejwt.tokens import RefreshToken
     refresh = RefreshToken.for_user(another_user)
-    api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
-    api_client.user = another_user
-    return api_client
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+    client.user = another_user 
+    return client
 
 @pytest.fixture
 def default_program():
