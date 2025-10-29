@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http'; // Importe HttpHeaders
 import {
   Observable,
   BehaviorSubject,
@@ -59,7 +59,9 @@ export class AuthService {
       .post<AuthResponse>(`${this.apiUrl}/auth/token/`, credentials)
       .pipe(
         tap((response) => this.saveTokens(response)),
-        switchMap(() => this.fetchAndStoreUserProfile())
+        switchMap((authResponse) =>
+          this.fetchAndStoreUserProfile(authResponse.access)
+        )
       );
   }
 
@@ -131,12 +133,25 @@ export class AuthService {
     localStorage.setItem(this.ACCESS_TOKEN_KEY, token);
   }
 
-  fetchAndStoreUserProfile(): Observable<UserProfile> {
-    if (!this.getAccessToken()) {
+  fetchAndStoreUserProfile(tokenOverride?: string): Observable<UserProfile> {
+    const token = tokenOverride ?? this.getAccessToken();
+    if (!token) {
+      this.currentUserSubject.next(null);
       return of({} as UserProfile);
     }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+    });
+
     return this.http
-      .get<UserProfile>(`${this.apiUrl}/users/me/`)
-      .pipe(tap((user) => this.currentUserSubject.next(user)));
+      .get<UserProfile>(`${this.apiUrl}/users/me/`, { headers })
+      .pipe(
+        tap((user) => this.currentUserSubject.next(user)),
+        catchError((error) => {
+          this.currentUserSubject.next(null);
+          return throwError(() => error);
+        })
+      );
   }
 }
