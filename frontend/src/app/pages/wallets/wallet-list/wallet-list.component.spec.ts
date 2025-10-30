@@ -222,24 +222,24 @@ describe('WalletListComponent', () => {
         expect(component.isModalLoading).toBeFalse();
       }));
 
-      // it('handleOk (Criação): deve mostrar erro se createWallet falhar', fakeAsync(() => {
-      //   mockWalletService.createWallet.and.returnValue(
-      //     throwError(() => new Error('Erro na API')).pipe(delay(0))
-      //   );
+      xit('handleOk (Criação): deve mostrar erro se createWallet falhar', fakeAsync(() => {
+        mockWalletService.createWallet.and.returnValue(
+          throwError(() => new Error('Erro na API')).pipe(delay(0))
+        );
 
-      //   component.handleOk();
-      //   expect(component.isModalLoading).toBeTrue();
+        component.handleOk();
+        expect(component.isModalLoading).toBeTrue();
 
-      //   tick();
-      //   fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
 
-      //   expect(component.isModalLoading).toBeFalse();
-      //   expect(mockMessageService.error).toHaveBeenCalledWith(
-      //     'Erro ao salvar carteira.'
-      //   );
-      //   expect(loadWalletsSpy).not.toHaveBeenCalled();
-      //   expect(component.isModalVisible).toBeTrue();
-      // }));
+        expect(component.isModalLoading).toBeFalse();
+        expect(mockMessageService.error).toHaveBeenCalledWith(
+          'Erro ao salvar carteira.'
+        );
+        expect(loadWalletsSpy).not.toHaveBeenCalled();
+        expect(component.isModalVisible).toBeTrue();
+      }));
     });
 
     describe('Wallet Update', () => {

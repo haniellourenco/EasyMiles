@@ -180,33 +180,33 @@ describe('WalletDetailComponent', () => {
       expect(component.isLoading).toBeFalse();
     }));
 
-    // it('deve mostrar erro se o forkJoin (loadDetails) falhar', fakeAsync(() => {
-    //   mockWalletService.getWalletById.and.returnValue(
-    //     of(mockWallet).pipe(delay(0))
-    //   );
-    //   mockWalletService.getLoyaltyAccounts.and.returnValue(
-    //     throwError(() => new Error('Falha ao buscar contas')).pipe(delay(0))
-    //   );
-    //   mockLoyaltyProgramService.getLoyaltyPrograms.and.returnValue(
-    //     of(mockPrograms).pipe(delay(0))
-    //   );
+    xit('deve mostrar erro se o forkJoin (loadDetails) falhar', fakeAsync(() => {
+      mockWalletService.getWalletById.and.returnValue(
+        of(mockWallet).pipe(delay(0))
+      );
+      mockWalletService.getLoyaltyAccounts.and.returnValue(
+        throwError(() => new Error('Falha ao buscar contas')).pipe(delay(0))
+      );
+      mockLoyaltyProgramService.getLoyaltyPrograms.and.returnValue(
+        of(mockPrograms).pipe(delay(0))
+      );
 
-    //   fixture.detectChanges();
-    //   expect(component.isLoading).toBeTrue();
+      fixture.detectChanges();
+      expect(component.isLoading).toBeTrue();
 
-    //   tick();
+      tick();
 
-    //   tick(100);
+      tick(100);
 
-    //   fixture.detectChanges();
+      fixture.detectChanges();
 
-    //   expect(component.isLoading).toBeFalse();
-    //   expect(mockMessageService.error).toHaveBeenCalledWith(
-    //     'Erro ao carregar os detalhes da carteira.'
-    //   );
-    //   expect(component.wallet).toBeNull();
-    //   expect(component.loyaltyAccounts.length).toBe(0);
-    // }));
+      expect(component.isLoading).toBeFalse();
+      expect(mockMessageService.error).toHaveBeenCalledWith(
+        'Erro ao carregar os detalhes da carteira.'
+      );
+      expect(component.wallet).toBeNull();
+      expect(component.loyaltyAccounts.length).toBe(0);
+    }));
   });
 
   describe('Add Account Modal', () => {
