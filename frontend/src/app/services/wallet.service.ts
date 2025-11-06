@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 // --- Interfaces (Tipos de Dados da API) ---
 
@@ -48,7 +49,7 @@ export interface WalletPayload {
   providedIn: 'root',
 })
 export class WalletService {
-  private apiUrl = 'http://127.0.0.1:8000/api';
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 

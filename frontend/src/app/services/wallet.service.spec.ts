@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { environment } from '../../environments/environment';
 import {
   HttpClientTestingModule,
   HttpTestingController,
@@ -14,7 +15,7 @@ import {
 describe('WalletService', () => {
   let service: WalletService;
   let httpMock: HttpTestingController;
-  const apiUrl = 'http://127.0.0.1:8000/api';
+  const apiUrl = environment.apiUrl;
 
   // --- Mocks ---
   const mockWallets: Wallet[] = [
