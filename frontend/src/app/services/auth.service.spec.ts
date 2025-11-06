@@ -7,6 +7,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
 import { Component } from '@angular/core';
 import { of, throwError } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 import { AuthService, AuthResponse, UserProfile } from './auth.service';
 
@@ -17,7 +18,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let httpTestingController: HttpTestingController;
   let router: Router;
-  const apiUrl = 'http://127.0.0.1:8000/api';
+  const apiUrl = environment.apiUrl;
 
   const mockAuthResponse: AuthResponse = {
     refresh: 'mockRefreshToken',

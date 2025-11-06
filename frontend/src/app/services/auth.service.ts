@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http'; // Importe HttpHeaders
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 import {
   Observable,
   BehaviorSubject,
@@ -40,7 +41,7 @@ export interface RegisterPayload {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = 'http://127.0.0.1:8000/api';
+  private apiUrl = environment.apiUrl;
   private readonly ACCESS_TOKEN_KEY = 'auth_access_token';
   private readonly REFRESH_TOKEN_KEY = 'auth_refresh_token';
 
