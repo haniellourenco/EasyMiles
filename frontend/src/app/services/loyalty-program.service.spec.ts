@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { environment } from '../../environments/environment';
 import {
   HttpClientTestingModule,
   HttpTestingController,
@@ -12,7 +13,7 @@ import {
 describe('LoyaltyProgramService', () => {
   let service: LoyaltyProgramService;
   let httpMock: HttpTestingController;
-  const apiUrl = 'http://127.0.0.1:8000/api/loyalty-programs';
+  const apiUrl = environment.apiUrl + '/loyalty-programs';
 
   beforeEach(() => {
     TestBed.configureTestingModule({
