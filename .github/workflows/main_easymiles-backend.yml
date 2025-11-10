@@ -1,19 +1,46 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy container app to Azure Web App - easymiles-backend
 
 on:
   push:
     branches:
       - main
+    paths:
+      - "backend/**"
   workflow_dispatch:
 
 jobs:
+  # test:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: ./backend # Define o diretório padrão
+
+  #   steps:
+  #   - name: 'Checkout código'
+  #     uses: actions/checkout@v4
+
+  #   - name: 'Configurar Python'
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: '3.11'
+
+  #   - name: 'Instalar dependências'
+  #     run: |
+  #       pip install --upgrade pip
+  #       pip install -r requirements.txt
+
+  #   - name: 'Rodar Testes (Pytest)'
+  #     env:
+  #       SECRET_KEY: 'test-key-ci'
+  #       DEBUG: 'True'
+  #       DB_ENGINE: 'django.db.backends.sqlite3'
+  #       DB_NAME: ':memory:'
+  #     run: pytest --cov=api
+
+  # Job de Build
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
+    #needs: test
 
     steps:
       - uses: actions/checkout@v4
@@ -25,29 +52,29 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: easymilesregistry.azurecr.io/
-          username: ${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_5C7763A806DC427DBE5C4FF12D601815 }}
-          password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_E1B4D4A558F641CEA3C1139293538210 }}
+          username: ${{ secrets.AzureAppService_ContainerUsername_4ceee61a41334e16b7f76652cfe0a6c4 }}
+          password: ${{ secrets.AzureAppService_ContainerPassword_657e4ce60c6c4269b5c258ed4927865b }}
 
       - name: Build and push container image to registry
         uses: docker/build-push-action@v3
         with:
-          context: .
-          push: true
-          tags: easymilesregistry.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_5C7763A806DC427DBE5C4FF12D601815 }}/easymiles-backend:${{ github.sha }}
-          file: ./Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
 
+          push: true
+          tags: easymilesregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_4ceee61a41334e16b7f76652cfe0a6c4 }}/easymiles-backend:${{ github.sha }}
+
+  # Job de Deploy
   deploy:
     runs-on: ubuntu-latest
-    
     needs: build
-    
+
     steps:
-      
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'easymiles-backend'
-          slot-name: 'Production'
-          images: 'easymilesregistry.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_5C7763A806DC427DBE5C4FF12D601815 }}/easymiles-backend:${{ github.sha }}'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_544B3EACE619408E999600FCD45675B0 }}
+          app-name: "easymiles-backend"
+          slot-name: "Production"
+          images: "easymilesregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_4ceee61a41334e16b7f76652cfe0a6c4 }}/easymiles-backend:${{ github.sha }}"
+          publish-profile: ${{ secrets.__publishingprofilesecretname__ }}
