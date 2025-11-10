@@ -65,17 +65,3 @@ jobs:
         with:
           app-name: ${{ secrets.APP_SERVICE_NAME }}
           images: "${{ secrets.ACR_NAME }}/easymiles-backend:latest"
-
-      # --- EXECUTAR MIGRAÇÕES ---
-      - name: "Executar Migrações do Django"
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            echo "Aguardando 30s para o App Service (backend) reiniciar com a nova imagem..."
-            sleep 30
-
-            echo "Executando o comando migrate no contêiner..."
-            az webapp exec \
-              --resource-group ${{ secrets.RESOURCE_GROUP_NAME }} \
-              --name ${{ secrets.APP_SERVICE_NAME }} \
-              --command-line "python manage.py migrate --noinput"
