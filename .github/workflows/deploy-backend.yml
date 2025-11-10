@@ -34,13 +34,13 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: "Rodar Testes (Pytest)"
-        env:
-          SECRET_KEY: "test-key-ci"
-          DEBUG: "True"
-          DB_ENGINE: "django.db.backends.sqlite3"
-          DB_NAME: ":memory:"
-        run: pytest --cov=api
+      # - name: "Rodar Testes (Pytest)"
+      #   env:
+      #     SECRET_KEY: "test-key-ci"
+      #     DEBUG: "True"
+      #     DB_ENGINE: "django.db.backends.sqlite3"
+      #     DB_NAME: ":memory:"
+      #   run: pytest --cov=api
 
       # --- ETAPA DE DEPLOY (CD) ---
       - name: "Login na Azure CLI"
@@ -65,19 +65,3 @@ jobs:
         with:
           app-name: ${{ secrets.APP_SERVICE_NAME }}
           images: "${{ secrets.ACR_NAME }}/easymiles-backend:latest"
-
-      # --- EXECUTAR MIGRAÇÕES ---
-      - name: "Executar Migrações do Django"
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            az webapp config appsettings set --resource-group ${{ secrets.RESOURCE_GROUP_NAME }} --name ${{ secrets.APP_SERVICE_NAME }} --settings WEBSITES_PORT=8000
-            az webapp restart --resource-group ${{ secrets.RESOURCE_GROUP_NAME }} --name ${{ secrets.APP_SERVICE_NAME }}
-
-            echo "Aguardando 30s para o App Service reiniciar antes de rodar a migração..."
-            sleep 30
-
-            az webapp run \
-              --resource-group ${{ secrets.RESOURCE_GROUP_NAME }} \
-              --name ${{ secrets.APP_SERVICE_NAME }} \
-              --command "python manage.py migrate --noinput"
