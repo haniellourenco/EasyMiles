@@ -52,8 +52,8 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: easymilesregistry.azurecr.io/
-          username: ${{ secrets.AzureAppService_ContainerUsername_4ceee61a41334e16b7f76652cfe0a6c4 }}
-          password: ${{ secrets.AzureAppService_ContainerPassword_657e4ce60c6c4269b5c258ed4927865b }}
+          username: ${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_5C7763A806DC427DBE5C4FF12D601815 }}
+          password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_E1B4D4A558F641CEA3C1139293538210  }}
 
       - name: Build and push container image to registry
         uses: docker/build-push-action@v3
@@ -62,7 +62,7 @@ jobs:
           file: ./backend/Dockerfile
 
           push: true
-          tags: easymilesregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_4ceee61a41334e16b7f76652cfe0a6c4 }}/easymiles-backend:${{ github.sha }}
+          tags: easymilesregistry.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_5C7763A806DC427DBE5C4FF12D601815 }}/easymiles-backend:${{ github.sha }}
 
   # Job de Deploy
   deploy:
@@ -76,5 +76,5 @@ jobs:
         with:
           app-name: "easymiles-backend"
           slot-name: "Production"
-          images: "easymilesregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_4ceee61a41334e16b7f76652cfe0a6c4 }}/easymiles-backend:${{ github.sha }}"
-          publish-profile: ${{ secrets.__publishingprofilesecretname__ }}
+          images: "easymilesregistry.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_5C7763A806DC427DBE5C4FF12D601815 }}/easymiles-backend:${{ github.sha }}"
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_544B3EACE619408E999600FCD45675B0 }}
