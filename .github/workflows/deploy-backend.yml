@@ -1,0 +1,83 @@
+name: Deploy Backend to Azure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: "Checkout código"
+        uses: actions/checkout@v4
+
+      # --- ETAPA DE TESTE (CI) ---
+      - name: "Configurar Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: "Instalar dependências"
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: "Rodar Testes (Pytest)"
+        env:
+          SECRET_KEY: "test-key-ci"
+          DEBUG: "True"
+          DB_ENGINE: "django.db.backends.sqlite3"
+          DB_NAME: ":memory:"
+        run: pytest --cov=api
+
+      # --- ETAPA DE DEPLOY (CD) ---
+      - name: "Login na Azure CLI"
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: "Login no Registro de Contêiner (ACR)"
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_NAME }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: "Construir e Enviar Imagem Docker"
+        run: |
+          docker build -t ${{ secrets.ACR_NAME }}/easymiles-backend:latest -f Dockerfile .
+          docker push ${{ secrets.ACR_NAME }}/easymiles-backend:latest
+
+      - name: "Fazer deploy no App Service (Reiniciar)"
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ secrets.APP_SERVICE_NAME }}
+          images: "${{ secrets.ACR_NAME }}/easymiles-backend:latest"
+
+      # --- EXECUTAR MIGRAÇÕES ---
+      - name: "Executar Migrações do Django"
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az webapp config appsettings set --resource-group ${{ secrets.RESOURCE_GROUP_NAME }} --name ${{ secrets.APP_SERVICE_NAME }} --settings WEBSITES_PORT=8000
+            az webapp restart --resource-group ${{ secrets.RESOURCE_GROUP_NAME }} --name ${{ secrets.APP_SERVICE_NAME }}
+
+            echo "Aguardando 30s para o App Service reiniciar antes de rodar a migração..."
+            sleep 30
+
+            az webapp run \
+              --resource-group ${{ secrets.RESOURCE_GROUP_NAME }} \
+              --name ${{ secrets.APP_SERVICE_NAME }} \
+              --command "python manage.py migrate --noinput"
