@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://SUA_API_URL_NA_AZURE.azurewebsites.net/api',
+  apiUrl: 'https://easymiles-backend.azurewebsites.net.azurewebsites.net/api',
 };
