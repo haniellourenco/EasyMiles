@@ -53,8 +53,8 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Migrations
-**/migrations/
-!**/migrations/__init__.py
+# **/migrations/
+# !**/migrations/__init__.py
 
 
 # Build
