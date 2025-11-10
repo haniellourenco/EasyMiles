@@ -34,13 +34,13 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: "Rodar Testes (Pytest)"
-        env:
-          SECRET_KEY: "test-key-ci"
-          DEBUG: "True"
-          DB_ENGINE: "django.db.backends.sqlite3"
-          DB_NAME: ":memory:"
-        #run: pytest --cov=api desabilitado temporariamente
+      # - name: "Rodar Testes (Pytest)"
+      #   env:
+      #     SECRET_KEY: "test-key-ci"
+      #     DEBUG: "True"
+      #     DB_ENGINE: "django.db.backends.sqlite3"
+      #     DB_NAME: ":memory:"
+      #run: pytest --cov=api desabilitado temporariamente
 
       # --- ETAPA DE DEPLOY (CD) ---
       - name: "Login na Azure CLI"
