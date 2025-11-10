@@ -33,6 +33,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY . .
 
+COPY entrypoint.sh /app/
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "core.wsgi:application"]
+CMD ["/app/entrypoint.sh"]
