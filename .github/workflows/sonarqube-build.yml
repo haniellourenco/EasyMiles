@@ -29,6 +29,32 @@ jobs:
         working-directory: ./frontend
         run: npm run test:ci
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install coverage
+
+      - name: Run Backend Tests
+        working-directory: ./backend
+        env:
+          SECRET_KEY: "test-secret-key-ci"
+          DEBUG: "True"
+          DB_ENGINE: "django.db.backends.sqlite3"
+          DB_NAME: ":memory:"
+          DB_USER: "user_dummy"
+          DB_PASSWORD: "password_dummy"
+          DB_HOST: "localhost"
+        run: |
+          coverage run -m pytest
+          coverage xml -o coverage.xml
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
