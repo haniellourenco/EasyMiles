@@ -46,8 +46,13 @@ jobs:
         env:
           SECRET_KEY: "test-secret-key-ci"
           DEBUG: "True"
+          DB_ENGINE: "django.db.backends.sqlite3"
+          DB_NAME: ":memory:"
+          DB_USER: "user_dummy"
+          DB_PASSWORD: "password_dummy"
+          DB_HOST: "localhost"
         run: |
-          coverage run manage.py test
+          coverage run -m pytest
           coverage xml -o coverage.xml
 
       - name: SonarQube Scan
