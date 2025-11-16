@@ -53,6 +53,7 @@ jobs:
           DB_HOST: "localhost"
         run: |
           coverage run -m pytest
+          coverage report
           coverage xml -o coverage.xml
 
       - name: SonarQube Scan
