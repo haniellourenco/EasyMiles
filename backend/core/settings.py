@@ -12,19 +12,16 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from decouple import config, Csv
-from datetime import timedelta # Adicionado para Simple JWT
+from datetime import timedelta 
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv(), default="localhost")
@@ -155,19 +152,19 @@ REST_FRAMEWORK = {
 
 # Simple JWT settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # Tempo de vida do token de acesso
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),   # Tempo de vida do token de refresh
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), 
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),   
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': True, # Atualiza o last_login do usuário
+    'UPDATE_LAST_LOGIN': True, 
 
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY, # Reutiliza a SECRET_KEY do Django
+    'SIGNING_KEY': SECRET_KEY, 
     'VERIFYING_KEY': None,
     'AUDIENCE': None,
     'ISSUER': None,
 
-    'AUTH_HEADER_TYPES': ('Bearer',), # Define o prefixo do token no header (Bearer <token>)
+    'AUTH_HEADER_TYPES': ('Bearer',), 
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
@@ -184,6 +181,4 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=Csv(), default="http://localhost:4200")
-# CORS_ALLOWED_ORIGINS = ["https://gray-ground-0a70e6c0f.3.azurestaticapps.net"]
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', cast=bool, default=False)
-# CORS_ALLOW_ALL_ORIGINS = True
