@@ -39,18 +39,15 @@ class LoyaltyProgramSerializer(serializers.ModelSerializer):
     get_currency_type_display = serializers.CharField(read_only=True)
     class Meta:
         model = LoyaltyProgram
-        fields = ['id', 'name', 'currency_type', 'get_currency_type_display','is_active', 'is_user_created', 'created_by', 'created_by_username', 'created_at']
-        read_only_fields = ['created_by', 'created_at'] # is_user_created é definido na view/serializer.create
+        fields = ['id', 'name', 'currency_type', 'get_currency_type_display','is_active', 'is_user_created', 'created_by', 'created_by_username', 'created_at','custom_rate']
+        read_only_fields = ['created_by', 'created_at'] 
 
     def create(self, validated_data):
         request = self.context.get('request')
-        # Se is_user_created=True é passado no payload e o usuário está autenticado
         if validated_data.get('is_user_created') and request and hasattr(request, 'user') and request.user.is_authenticated:
             validated_data['created_by'] = request.user
         else:
-            # Programas globais (is_user_created=False) não têm `created_by` de usuário comum,
-            # ou são criados por um admin/sistema.
-            validated_data['is_user_created'] = False # Garante que seja False se não definido pelo usuário.
+            validated_data['is_user_created'] = False 
             validated_data['created_by'] = None
         return super().create(validated_data)
 
@@ -68,27 +65,25 @@ class LoyaltyAccountSerializer(serializers.ModelSerializer):
     program_name = serializers.ReadOnlyField(source='program.name')
     wallet_name = serializers.ReadOnlyField(source='wallet.wallet_name')
     program_currency_type = serializers.ReadOnlyField(source='program.get_currency_type_display')
+    program_custom_rate = serializers.DecimalField(source='program.custom_rate', max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = LoyaltyAccount
         fields = [
             'id', 'wallet', 'wallet_name', 'program', 'program_name', 'program_currency_type',
             'account_number', 'name', 'current_balance', 'average_cost',
-            'custom_rate', 'last_updated', 'is_active', 'created_at'
+            'program_custom_rate', 'last_updated', 'is_active', 'created_at'
         ]
         read_only_fields = ['created_at','wallet', 'last_updated', 'is_active']
-        # 'wallet' será preenchido pela URL em rotas aninhadas ou validado se fornecido diretamente.
 
     def validate_program(self, value):
-        if not value.is_active: # Adicionado para consistência
+        if not value.is_active: 
             raise serializers.ValidationError("Não pode criar uma conta para um programa de fidelidade inativo.")
         return value
     
     def validate_wallet(self, value):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
-            # Se a carteira está sendo definida explicitamente (não via URL aninhada),
-            # garanta que ela pertence ao usuário logado.
             if value.user != request.user:
                 raise serializers.ValidationError("A carteira deve pertencer ao usuário atual.")
         return value
@@ -96,11 +91,9 @@ class LoyaltyAccountSerializer(serializers.ModelSerializer):
 
 class PointsTransactionSerializer(serializers.ModelSerializer):
     transaction_type_display = serializers.ReadOnlyField(source='get_transaction_type_display')
-    # Campos para mostrar nomes das contas, se existirem
     origin_account_name = serializers.CharField(source='origin_account.name', read_only=True, allow_null=True)
     destination_account_name = serializers.CharField(source='destination_account.name', read_only=True, allow_null=True)
 
-    # Para permitir que o frontend envie IDs para as contas
     origin_account = serializers.PrimaryKeyRelatedField(
         queryset=LoyaltyAccount.objects.all(), allow_null=True, required=False
     )
@@ -125,7 +118,6 @@ class PointsTransactionSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         user = request.user if request and hasattr(request, 'user') else None
 
-        # Pelo menos uma conta deve ser especificada
         if not origin_account and not destination_account:
             raise serializers.ValidationError(
                 "Pelo menos uma conta deve ser especificada."
@@ -157,15 +149,13 @@ class PointsTransactionSerializer(serializers.ModelSerializer):
             if destination_account:
                 raise serializers.ValidationError({'destination_account': f"A conta de destino não deve ser definida para '{PointsTransaction.TRANSACTION_TYPE_CHOICES[ttype-1][1]}'."})
         elif ttype == 6: # Ajuste de Saldo
-            if not origin_account and not destination_account: # Pelo menos uma deve ser fornecida
+            if not origin_account and not destination_account: 
                 raise serializers.ValidationError("Uma conta de origem ou destino deve ser fornecida para 'Ajuste de Saldo'.")
-            if origin_account and destination_account: # Não ambas ao mesmo tempo para um simples ajuste
+            if origin_account and destination_account: 
                  raise serializers.ValidationError("Forneça apenas uma conta (origem ou destino) para 'Ajuste de Saldo'.")
         
-        # Adicionar validação para `transaction_date` se necessário (ex: não pode ser no futuro)
         return data
 
-# Serializers para Simulação e Resumo
 class SimulateTransferSerializer(serializers.Serializer):
     from_account_id = serializers.IntegerField(required=True)
     to_account_id = serializers.IntegerField(required=True)

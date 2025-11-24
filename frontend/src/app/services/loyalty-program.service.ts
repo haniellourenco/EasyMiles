@@ -10,6 +10,7 @@ export interface LoyaltyProgram {
   get_currency_type_display: string;
   is_user_created: boolean;
   is_active: boolean;
+  custom_rate: number;
 }
 
 export interface LoyaltyProgramPayload {
@@ -17,6 +18,7 @@ export interface LoyaltyProgramPayload {
   currency_type: number;
   is_active: boolean;
   is_user_created: boolean;
+  custom_rate: number;
 }
 
 @Injectable({
@@ -38,6 +40,17 @@ export class LoyaltyProgramService {
   ): Observable<LoyaltyProgram> {
     return this.http.post<LoyaltyProgram>(
       `${this.apiUrl}/loyalty-programs/`,
+      payload
+    );
+  }
+
+  // PUT /api/loyalty-programs/{id}/
+  updateLoyaltyProgram(
+    id: number,
+    payload: LoyaltyProgramPayload
+  ): Observable<LoyaltyProgram> {
+    return this.http.put<LoyaltyProgram>(
+      `${this.apiUrl}/loyalty-programs/${id}/`,
       payload
     );
   }

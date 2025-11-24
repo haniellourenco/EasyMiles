@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction as db_transaction
 from django.db.models import Sum, Avg, F, Q, Case, When, Value, DecimalField, Count
 from django.utils import timezone
-from decimal import Decimal, ROUND_HALF_UP # Certifique-se que ROUND_HALF_UP está importado
+from decimal import Decimal, ROUND_HALF_UP
 
 
 from .models import LoyaltyProgram, UserWallet, LoyaltyAccount, PointsTransaction
@@ -27,7 +27,7 @@ User = get_user_model()
 class UserRegistrationAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
-    permission_classes = [AllowAny] # Qualquer um pode se registrar
+    permission_classes = [AllowAny] 
 
 class UserProfileAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = CurrentUserSerializer
@@ -174,31 +174,27 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
     def _apply_transaction_effects(self, transaction: PointsTransaction):
         ttype = transaction.transaction_type
         amount = abs(transaction.amount) # Garante que o montante é positivo
-        transaction_cost = transaction.cost if transaction.cost is not None else Decimal('0.00') # Custo TOTAL da transação
+        transaction_cost = transaction.cost if transaction.cost is not None else Decimal('0.00') 
 
         # Tipo 1: Inclusão Manual (Crédito)
         if ttype == 1 and transaction.destination_account:
             acc = transaction.destination_account
-            # Saldo *antes* de adicionar o 'amount' desta transação
             old_balance = acc.current_balance
             old_avg_cost_per_thousand = acc.average_cost if acc.average_cost is not None else Decimal('0.00')
 
-            # Atualiza o saldo
             acc.current_balance += amount
 
-            # Calcula o novo custo médio ponderado (por milheiro)
             if amount > 0:
                 old_total_cost = (old_balance / Decimal('1000.0')) * old_avg_cost_per_thousand
-                added_total_cost = transaction_cost # transaction_cost é o custo total do 'amount' adicionado
+                added_total_cost = transaction_cost 
                 new_total_cost = old_total_cost + added_total_cost
-                new_total_balance = acc.current_balance # Já atualizado
+                new_total_balance = acc.current_balance 
 
                 if new_total_balance > 0:
                     new_avg_cost_per_thousand = (new_total_cost / new_total_balance) * Decimal('1000.0')
                     acc.average_cost = new_avg_cost_per_thousand.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                 else:
                     acc.average_cost = Decimal('0.00')
-            # Se amount == 0, o custo médio não muda.
 
             acc.last_updated = timezone.now()
             acc.save()
@@ -212,23 +208,19 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
             amount_credited_to_dest = amount * (Decimal('1.00') + (bonus_perc / Decimal('100.00')))
             amount_credited_to_dest = amount_credited_to_dest.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-            # --- Origem ---
             old_avg_cost_origin_per_thousand = origin_acc.average_cost if origin_acc.average_cost is not None else Decimal('0.00')
-            # Custo total dos pontos que estão saindo da origem
+
             cost_of_points_transferred = (amount / Decimal('1000.0')) * old_avg_cost_origin_per_thousand
 
             origin_acc.current_balance -= amount
             origin_acc.last_updated = timezone.now()
             origin_acc.save()
 
-            # --- Destino ---
             old_balance_dest = dest_acc.current_balance
             old_avg_cost_dest_per_thousand = dest_acc.average_cost if dest_acc.average_cost is not None else Decimal('0.00')
 
-            # Atualiza saldo destino
             dest_acc.current_balance += amount_credited_to_dest
 
-            # Calcula novo custo médio ponderado no destino (por milheiro)
             if amount_credited_to_dest > 0:
                 old_total_cost_dest = (old_balance_dest / Decimal('1000.0')) * old_avg_cost_dest_per_thousand
                 # Custo total adicionado ao destino = custo dos pontos transferidos + taxa de transferência (transaction_cost)
@@ -241,7 +233,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
                     dest_acc.average_cost = new_avg_cost_dest_per_thousand.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                 else:
                      dest_acc.average_cost = Decimal('0.00')
-            # Se amount_credited_to_dest == 0, custo médio não muda.
 
             dest_acc.last_updated = timezone.now()
             dest_acc.save()
@@ -250,20 +241,18 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
         elif ttype in [3, 4, 5] and transaction.origin_account:
             acc = transaction.origin_account
             acc.current_balance -= amount
-            # Custo médio não se altera em operações de débito simples
             acc.last_updated = timezone.now()
             acc.save()
 
         # Tipo 6: Ajuste de Saldo
         elif ttype == 6:
-            if transaction.destination_account: # Ajuste de Crédito
+            if transaction.destination_account:
                 acc = transaction.destination_account
                 old_balance = acc.current_balance
                 old_avg_cost_per_thousand = acc.average_cost if acc.average_cost is not None else Decimal('0.00')
 
                 acc.current_balance += amount
 
-                # Recalcula custo médio se houver custo associado ao ajuste
                 if transaction_cost > 0 and amount > 0:
                     old_total_cost = (old_balance / Decimal('1000.0')) * old_avg_cost_per_thousand
                     added_total_cost = transaction_cost
@@ -275,11 +264,10 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
                          acc.average_cost = new_avg_cost_per_thousand.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                     else:
                          acc.average_cost = Decimal('0.00')
-                # Se não há custo no ajuste, mas havia custo antes, o custo médio é diluído
                 elif old_balance > 0 and old_avg_cost_per_thousand > 0 and transaction_cost == 0 and amount > 0:
                     old_total_cost = (old_balance / Decimal('1000.0')) * old_avg_cost_per_thousand
                     new_total_balance = acc.current_balance
-                    new_avg_cost_per_thousand = (old_total_cost / new_total_balance) * Decimal('1000.0') # Custo total não muda, saldo aumenta
+                    new_avg_cost_per_thousand = (old_total_cost / new_total_balance) * Decimal('1000.0') 
                     acc.average_cost = new_avg_cost_per_thousand.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
                 acc.last_updated = timezone.now()
@@ -291,9 +279,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
                 acc.save()
 
     def _reverse_transaction_effects(self, transaction: PointsTransaction):
-        # A reversão do custo médio é complexa e pode levar a imprecisões.
-        # Por simplicidade, este método apenas reverte o saldo.
-        # Uma abordagem mais robusta exigiria recalcular o histórico ou armazenar snapshots.
         ttype = transaction.transaction_type
         amount = abs(transaction.amount)
 
@@ -452,9 +437,9 @@ class SummaryAPIView(views.APIView):
         if active_accounts_qs.exists():
             annotated_accounts = active_accounts_qs.annotate(
                 account_value=Case(
-                    When(custom_rate__isnull=False, custom_rate__gt=0, 
+                    When(program__custom_rate__isnull=False, program__custom_rate__gt=0,
                          # Assumindo que custom_rate é por milheiro também
-                         then=(F('current_balance') / Decimal('1000.0')) * F('custom_rate')),
+                         then=(F('current_balance') / Decimal('1000.0')) * F('program__custom_rate')),
                     default=Value(Decimal('0.00')),
                     output_field=DecimalField(max_digits=12, decimal_places=2)
                 )

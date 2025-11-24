@@ -20,18 +20,13 @@ from .views import (
 router = routers.DefaultRouter()
 router.register(r'loyalty-programs', LoyaltyProgramViewSet, basename='loyaltyprogram')
 router.register(r'wallets', UserWalletViewSet, basename='userwallet')
-# Rotas de nível superior para contas e transações (permitem listar todas do usuário)
 router.register(r'loyalty-accounts', LoyaltyAccountViewSet, basename='loyaltyaccount-list')
 router.register(r'transactions', PointsTransactionViewSet, basename='pointstransaction-list')
 router.register(r'simulations', SimulationViewSet, basename='simulation')
 
-
-# Rotas aninhadas: /wallets/{wallet_pk}/loyalty-accounts/
 wallets_router = routers.NestedSimpleRouter(router, r'wallets', lookup='wallet')
 wallets_router.register(r'loyalty-accounts', LoyaltyAccountViewSet, basename='wallet-loyaltyaccount')
 
-# Rotas aninhadas: /loyalty-accounts/{account_pk}/transactions/
-# Esta rota aninhada agora usará a lookup 'account' 
 accounts_router = routers.NestedSimpleRouter(router, r'loyalty-accounts', lookup='account')
 accounts_router.register(r'transactions', PointsTransactionViewSet, basename='account-transaction')
 
