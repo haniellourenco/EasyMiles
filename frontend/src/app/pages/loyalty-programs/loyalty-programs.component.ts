@@ -13,7 +13,6 @@ import {
   LoyaltyProgramService,
 } from '../../services/loyalty-program.service';
 
-// Imports Standalone
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -26,6 +25,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 
 @Component({
   selector: 'app-loyalty-programs',
@@ -46,6 +46,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
     NzTagModule,
     NzMessageModule,
     NzDividerModule,
+    NzInputNumberModule,
   ],
   templateUrl: './loyalty-programs.component.html',
   styleUrls: ['./loyalty-programs.component.css'],
@@ -57,13 +58,18 @@ export class LoyaltyProgramsComponent implements OnInit {
   isModalVisible = false;
   isModalLoading = false;
   programForm!: FormGroup;
+  editingId: number | null = null;
 
-  // Opções para o dropdown de tipo de moeda
   currencyTypes = [
     { label: 'Pontos', value: 1 },
     { label: 'Milhas', value: 2 },
   ];
 
+  formatterDollar = (value: number): string => `R$ ${value}`;
+  parserDollar = (value: string): number => {
+    if (!value) return 0;
+    return parseFloat(value.replace('R$ ', ''));
+  };
   constructor(
     private loyaltyProgramService: LoyaltyProgramService,
     private fb: FormBuilder,
@@ -75,6 +81,7 @@ export class LoyaltyProgramsComponent implements OnInit {
     this.programForm = this.fb.group({
       name: [null, [Validators.required]],
       currency_type: [null, [Validators.required]],
+      custom_rate: [0, [Validators.required, Validators.min(0)]],
     });
   }
 
@@ -94,28 +101,57 @@ export class LoyaltyProgramsComponent implements OnInit {
   }
 
   showModal(): void {
-    this.programForm.reset();
+    this.editingId = null;
+    this.programForm.reset({
+      custom_rate: 0,
+    });
+    this.isModalVisible = true;
+  }
+
+  showEditModal(program: LoyaltyProgram): void {
+    this.editingId = program.id;
+    // Preenche o formulário com os dados do programa
+    this.programForm.patchValue({
+      name: program.name,
+      currency_type: program.currency_type,
+      custom_rate: program.custom_rate,
+    });
     this.isModalVisible = true;
   }
 
   handleOk(): void {
     if (this.programForm.valid) {
       this.isModalLoading = true;
+
       const payload = {
         ...this.programForm.value,
         is_active: true,
         is_user_created: true,
       };
-      this.loyaltyProgramService.createLoyaltyProgram(payload).subscribe({
+
+      let request$;
+
+      if (this.editingId) {
+        request$ = this.loyaltyProgramService.updateLoyaltyProgram(
+          this.editingId,
+          payload
+        );
+      } else {
+        request$ = this.loyaltyProgramService.createLoyaltyProgram(payload);
+      }
+
+      request$.subscribe({
         next: () => {
-          this.message.success('Programa criado com sucesso!');
-          this.isModalVisible = false;
-          this.isModalLoading = false;
+          const msg = this.editingId
+            ? 'Programa atualizado com sucesso!'
+            : 'Programa criado com sucesso!';
+          this.message.success(msg);
+          this.closeModal();
           this.loadPrograms();
         },
         error: (err) => {
           this.message.error(
-            err.error?.name?.[0] || 'Não foi possível criar o programa.'
+            err.error?.name?.[0] || 'Erro ao salvar o programa.'
           );
           this.isModalLoading = false;
         },
@@ -129,7 +165,13 @@ export class LoyaltyProgramsComponent implements OnInit {
   }
 
   handleCancel(): void {
+    this.closeModal();
+  }
+  private closeModal(): void {
     this.isModalVisible = false;
+    this.isModalLoading = false;
+    this.editingId = null;
+    this.programForm.reset();
   }
 
   toggleStatus(program: LoyaltyProgram): void {
@@ -137,7 +179,7 @@ export class LoyaltyProgramsComponent implements OnInit {
       next: () => {
         const action = program.is_active ? 'desativado' : 'reativado';
         this.message.success(`Programa ${action} com sucesso!`);
-        this.loadPrograms(); // Recarrega a lista para refletir a mudança
+        this.loadPrograms();
       },
       error: () => {
         this.message.error('Não foi possível alterar o status do programa.');
@@ -158,8 +200,6 @@ export class LoyaltyProgramsComponent implements OnInit {
         this.loadPrograms();
       },
       error: (err: any) => {
-        // Agora tentamos pegar a mensagem 'detail' do erro.
-        // Se não existir, usamos a mensagem genérica.
         const errorMessage =
           err.error?.detail || 'Não foi possível excluir o programa.';
         this.message.error(errorMessage);

@@ -3,8 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-// --- Interfaces (Tipos de Dados da API) ---
-
 // Interface para a resposta do endpoint de contas de fidelidade
 export interface LoyaltyAccount {
   id: number;
@@ -17,6 +15,7 @@ export interface LoyaltyAccount {
   program_currency_type: string;
   current_balance: string;
   average_cost: string;
+  custom_rate?: number | string;
 }
 
 export interface LoyaltyProgram {
@@ -97,6 +96,17 @@ export class WalletService {
   ): Observable<LoyaltyAccount> {
     return this.http.post<LoyaltyAccount>(
       `${this.apiUrl}/wallets/${walletId}/loyalty-accounts/`,
+      payload
+    );
+  }
+
+  // PATCH /api/loyalty-accounts/{id}/
+  updateLoyaltyAccount(
+    id: number,
+    payload: Partial<LoyaltyAccountPayload>
+  ): Observable<LoyaltyAccount> {
+    return this.http.patch<LoyaltyAccount>(
+      `${this.apiUrl}/loyalty-accounts/${id}/`,
       payload
     );
   }
