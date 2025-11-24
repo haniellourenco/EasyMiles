@@ -13,7 +13,6 @@ import {
   LoyaltyProgramService,
 } from '../../services/loyalty-program.service';
 
-// Imports Standalone
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -58,7 +57,6 @@ export class LoyaltyProgramsComponent implements OnInit {
   isModalLoading = false;
   programForm!: FormGroup;
 
-  // Opções para o dropdown de tipo de moeda
   currencyTypes = [
     { label: 'Pontos', value: 1 },
     { label: 'Milhas', value: 2 },
@@ -69,12 +67,16 @@ export class LoyaltyProgramsComponent implements OnInit {
     private fb: FormBuilder,
     private message: NzMessageService
   ) {}
+  formatterDollar = (value: number): string => `R$ ${value}`;
+  parserDollar = (value: string): number =>
+    parseFloat(value.replace('R$ ', ''));
 
   ngOnInit(): void {
     this.loadPrograms();
     this.programForm = this.fb.group({
       name: [null, [Validators.required]],
       currency_type: [null, [Validators.required]],
+      custom_rate: [0, [Validators.required, Validators.min(0)]],
     });
   }
 
@@ -137,7 +139,7 @@ export class LoyaltyProgramsComponent implements OnInit {
       next: () => {
         const action = program.is_active ? 'desativado' : 'reativado';
         this.message.success(`Programa ${action} com sucesso!`);
-        this.loadPrograms(); // Recarrega a lista para refletir a mudança
+        this.loadPrograms();
       },
       error: () => {
         this.message.error('Não foi possível alterar o status do programa.');
@@ -158,8 +160,6 @@ export class LoyaltyProgramsComponent implements OnInit {
         this.loadPrograms();
       },
       error: (err: any) => {
-        // Agora tentamos pegar a mensagem 'detail' do erro.
-        // Se não existir, usamos a mensagem genérica.
         const errorMessage =
           err.error?.detail || 'Não foi possível excluir o programa.';
         this.message.error(errorMessage);
