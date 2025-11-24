@@ -437,9 +437,9 @@ class SummaryAPIView(views.APIView):
         if active_accounts_qs.exists():
             annotated_accounts = active_accounts_qs.annotate(
                 account_value=Case(
-                    When(custom_rate__isnull=False, custom_rate__gt=0, 
+                    When(program__custom_rate__isnull=False, program__custom_rate__gt=0,
                          # Assumindo que custom_rate é por milheiro também
-                         then=(F('current_balance') / Decimal('1000.0')) * F('custom_rate')),
+                         then=(F('current_balance') / Decimal('1000.0')) * F('program__custom_rate')),
                     default=Value(Decimal('0.00')),
                     output_field=DecimalField(max_digits=12, decimal_places=2)
                 )

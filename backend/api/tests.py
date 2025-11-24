@@ -330,12 +330,11 @@ def test_create_account_nested(authenticated_api_client, user_wallet, default_pr
 
 def test_update_account(authenticated_api_client, loyalty_account):
     url = reverse('loyaltyaccount-list-detail', kwargs={'pk': loyalty_account.pk}) 
-    data = {"name": "Conta Milhas Padrao Atualizada", "custom_rate": "30.0000"}
+    data = {"name": "Conta Milhas Padrao Atualizada"}
     response = authenticated_api_client.patch(url, data, format='json')
     assert response.status_code == status.HTTP_200_OK
     loyalty_account.refresh_from_db()
     assert loyalty_account.name == "Conta Milhas Padrao Atualizada"
-    assert loyalty_account.custom_rate == Decimal('30.0000')
 
 def test_delete_account(authenticated_api_client, loyalty_account):
     url = reverse('loyaltyaccount-list-detail', kwargs={'pk': loyalty_account.pk})
@@ -499,8 +498,11 @@ def test_simulate_sale_insufficient_balance(authenticated_api_client, loyalty_ac
 
 
 def test_summary_api(authenticated_api_client, loyalty_account, loyalty_account_points):
-    loyalty_account.custom_rate = Decimal('28.5000') 
-    loyalty_account.save()
+    # loyalty_account.custom_rate = Decimal('28.5000') 
+    # loyalty_account.save()
+    program = loyalty_account.program
+    program.custom_rate = Decimal('28.50')
+    program.save()
 
     url = reverse('summary-overall')
     response = authenticated_api_client.get(url)
