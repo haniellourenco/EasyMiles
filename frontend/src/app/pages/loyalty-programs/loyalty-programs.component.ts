@@ -58,6 +58,7 @@ export class LoyaltyProgramsComponent implements OnInit {
   isModalVisible = false;
   isModalLoading = false;
   programForm!: FormGroup;
+  editingId: number | null = null;
 
   currencyTypes = [
     { label: 'Pontos', value: 1 },
@@ -100,8 +101,20 @@ export class LoyaltyProgramsComponent implements OnInit {
   }
 
   showModal(): void {
+    this.editingId = null;
     this.programForm.reset({
       custom_rate: 0,
+    });
+    this.isModalVisible = true;
+  }
+
+  showEditModal(program: LoyaltyProgram): void {
+    this.editingId = program.id;
+    // Preenche o formulário com os dados do programa
+    this.programForm.patchValue({
+      name: program.name,
+      currency_type: program.currency_type,
+      custom_rate: program.custom_rate,
     });
     this.isModalVisible = true;
   }
@@ -109,21 +122,36 @@ export class LoyaltyProgramsComponent implements OnInit {
   handleOk(): void {
     if (this.programForm.valid) {
       this.isModalLoading = true;
+
       const payload = {
         ...this.programForm.value,
         is_active: true,
         is_user_created: true,
       };
-      this.loyaltyProgramService.createLoyaltyProgram(payload).subscribe({
+
+      let request$;
+
+      if (this.editingId) {
+        request$ = this.loyaltyProgramService.updateLoyaltyProgram(
+          this.editingId,
+          payload
+        );
+      } else {
+        request$ = this.loyaltyProgramService.createLoyaltyProgram(payload);
+      }
+
+      request$.subscribe({
         next: () => {
-          this.message.success('Programa criado com sucesso!');
-          this.isModalVisible = false;
-          this.isModalLoading = false;
+          const msg = this.editingId
+            ? 'Programa atualizado com sucesso!'
+            : 'Programa criado com sucesso!';
+          this.message.success(msg);
+          this.closeModal();
           this.loadPrograms();
         },
         error: (err) => {
           this.message.error(
-            err.error?.name?.[0] || 'Não foi possível criar o programa.'
+            err.error?.name?.[0] || 'Erro ao salvar o programa.'
           );
           this.isModalLoading = false;
         },
@@ -137,7 +165,13 @@ export class LoyaltyProgramsComponent implements OnInit {
   }
 
   handleCancel(): void {
+    this.closeModal();
+  }
+  private closeModal(): void {
     this.isModalVisible = false;
+    this.isModalLoading = false;
+    this.editingId = null;
+    this.programForm.reset();
   }
 
   toggleStatus(program: LoyaltyProgram): void {

@@ -28,12 +28,15 @@
                         </nz-tag>
                     </td>
                     <td>{{ program.get_currency_type_display }}</td>
-
                     <td>
                         {{ program.custom_rate | currency:'BRL' }}
                     </td>
-
                     <td>
+                        <button nz-button nzType="link" (click)="showEditModal(program)"
+                            [disabled]="!program.is_user_created">
+                            <i nz-icon nzType="edit"></i> Editar
+                        </button>
+                        <nz-divider nzType="vertical"></nz-divider>
                         <button nz-button nzType="default" (click)="toggleStatus(program)">
                             {{ program.is_active ? 'Desativar' : 'Reativar' }}
                         </button>
@@ -51,8 +54,9 @@
     </div>
 </div>
 
-<nz-modal [(nzVisible)]="isModalVisible" nzTitle="Adicionar Novo Programa" (nzOnCancel)="handleCancel()"
-    (nzOnOk)="handleOk()" [nzOkLoading]="isModalLoading">
+<nz-modal [(nzVisible)]="isModalVisible" [nzTitle]="editingId ? 'Editar Programa' : 'Adicionar Novo Programa'"
+    (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()" [nzOkLoading]="isModalLoading">
+
     <ng-container *nzModalContent>
         <form nz-form [formGroup]="programForm" nzLayout="vertical">
             <nz-form-item>

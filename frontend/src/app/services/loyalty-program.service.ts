@@ -44,6 +44,17 @@ export class LoyaltyProgramService {
     );
   }
 
+  // PUT /api/loyalty-programs/{id}/
+  updateLoyaltyProgram(
+    id: number,
+    payload: LoyaltyProgramPayload
+  ): Observable<LoyaltyProgram> {
+    return this.http.put<LoyaltyProgram>(
+      `${this.apiUrl}/loyalty-programs/${id}/`,
+      payload
+    );
+  }
+
   // DELETE /api/loyalty-programs/{id}/
   deleteLoyaltyProgram(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/loyalty-programs/${id}/`);
