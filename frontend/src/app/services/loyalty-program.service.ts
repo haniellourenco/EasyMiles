@@ -10,6 +10,7 @@ export interface LoyaltyProgram {
   get_currency_type_display: string;
   is_user_created: boolean;
   is_active: boolean;
+  custom_rate: number;
 }
 
 export interface LoyaltyProgramPayload {
@@ -17,6 +18,7 @@ export interface LoyaltyProgramPayload {
   currency_type: number;
   is_active: boolean;
   is_user_created: boolean;
+  custom_rate: number;
 }
 
 @Injectable({

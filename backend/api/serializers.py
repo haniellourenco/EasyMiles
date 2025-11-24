@@ -39,7 +39,7 @@ class LoyaltyProgramSerializer(serializers.ModelSerializer):
     get_currency_type_display = serializers.CharField(read_only=True)
     class Meta:
         model = LoyaltyProgram
-        fields = ['id', 'name', 'currency_type', 'get_currency_type_display','is_active', 'is_user_created', 'created_by', 'created_by_username', 'created_at']
+        fields = ['id', 'name', 'currency_type', 'get_currency_type_display','is_active', 'is_user_created', 'created_by', 'created_by_username', 'created_at','custom_rate']
         read_only_fields = ['created_by', 'created_at'] 
 
     def create(self, validated_data):
@@ -65,13 +65,14 @@ class LoyaltyAccountSerializer(serializers.ModelSerializer):
     program_name = serializers.ReadOnlyField(source='program.name')
     wallet_name = serializers.ReadOnlyField(source='wallet.wallet_name')
     program_currency_type = serializers.ReadOnlyField(source='program.get_currency_type_display')
+    program_custom_rate = serializers.DecimalField(source='program.custom_rate', max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = LoyaltyAccount
         fields = [
             'id', 'wallet', 'wallet_name', 'program', 'program_name', 'program_currency_type',
             'account_number', 'name', 'current_balance', 'average_cost',
-            'custom_rate', 'last_updated', 'is_active', 'created_at'
+            'program_custom_rate', 'last_updated', 'is_active', 'created_at'
         ]
         read_only_fields = ['created_at','wallet', 'last_updated', 'is_active']
 
