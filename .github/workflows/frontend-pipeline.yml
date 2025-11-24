@@ -1,4 +1,4 @@
-name: Frontend - Build and Deploy to Azure Static Web Apps
+name: Azure Static Web Apps CI/CD
 
 on:
   push:
