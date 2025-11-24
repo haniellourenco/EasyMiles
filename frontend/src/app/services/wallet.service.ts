@@ -3,8 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-// --- Interfaces (Tipos de Dados da API) ---
-
 // Interface para a resposta do endpoint de contas de fidelidade
 export interface LoyaltyAccount {
   id: number;

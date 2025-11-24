@@ -25,6 +25,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 
 @Component({
   selector: 'app-loyalty-programs',
@@ -45,6 +46,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
     NzTagModule,
     NzMessageModule,
     NzDividerModule,
+    NzInputNumberModule,
   ],
   templateUrl: './loyalty-programs.component.html',
   styleUrls: ['./loyalty-programs.component.css'],
@@ -62,14 +64,16 @@ export class LoyaltyProgramsComponent implements OnInit {
     { label: 'Milhas', value: 2 },
   ];
 
+  formatterDollar = (value: number): string => `R$ ${value}`;
+  parserDollar = (value: string): number => {
+    if (!value) return 0;
+    return parseFloat(value.replace('R$ ', ''));
+  };
   constructor(
     private loyaltyProgramService: LoyaltyProgramService,
     private fb: FormBuilder,
     private message: NzMessageService
   ) {}
-  formatterDollar = (value: number): string => `R$ ${value}`;
-  parserDollar = (value: string): number =>
-    parseFloat(value.replace('R$ ', ''));
 
   ngOnInit(): void {
     this.loadPrograms();
@@ -96,7 +100,9 @@ export class LoyaltyProgramsComponent implements OnInit {
   }
 
   showModal(): void {
-    this.programForm.reset();
+    this.programForm.reset({
+      custom_rate: 0,
+    });
     this.isModalVisible = true;
   }
 
