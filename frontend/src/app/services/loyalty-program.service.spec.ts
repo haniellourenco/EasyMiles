@@ -41,6 +41,7 @@ describe('LoyaltyProgramService', () => {
         get_currency_type_display: 'Milhas',
         is_user_created: false,
         is_active: true,
+        custom_rate: 0,
       },
     ];
 
@@ -61,6 +62,7 @@ describe('LoyaltyProgramService', () => {
       currency_type: 1,
       is_active: true,
       is_user_created: true,
+      custom_rate: 10,
     };
     const mockResponse: LoyaltyProgram = {
       id: 2,
@@ -100,6 +102,7 @@ describe('LoyaltyProgramService', () => {
       get_currency_type_display: 'Milhas',
       is_user_created: false,
       is_active: false,
+      custom_rate: 0,
     };
 
     service.toggleProgramStatus(programId).subscribe((program) => {

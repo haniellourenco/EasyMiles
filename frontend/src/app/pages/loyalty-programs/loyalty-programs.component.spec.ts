@@ -28,6 +28,7 @@ const mockPrograms: LoyaltyProgram[] = [
     get_currency_type_display: 'Milhas',
     is_user_created: false,
     is_active: true,
+    custom_rate: 0,
   },
   {
     id: 2,
@@ -36,6 +37,7 @@ const mockPrograms: LoyaltyProgram[] = [
     get_currency_type_display: 'Pontos',
     is_user_created: true,
     is_active: true,
+    custom_rate: 20.0,
   },
   {
     id: 3,
@@ -44,6 +46,7 @@ const mockPrograms: LoyaltyProgram[] = [
     get_currency_type_display: 'Pontos',
     is_user_created: true,
     is_active: false,
+    custom_rate: 0,
   },
 ];
 
@@ -169,12 +172,14 @@ describe('LoyaltyProgramsComponent', () => {
         currency_type: 1,
         is_active: true,
         is_user_created: true,
+        custom_rate: 25.0,
       };
 
       component.showModal();
       component.programForm.setValue({
         name: 'Novo Programa',
         currency_type: 1,
+        custom_rate: 25.0,
       });
 
       mockProgramService.createLoyaltyProgram.and.returnValue(
