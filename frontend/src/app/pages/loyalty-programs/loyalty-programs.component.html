@@ -15,6 +15,7 @@
                     <th>Nome do Programa</th>
                     <th>Status</th>
                     <th>Tipo da Moeda</th>
+                    <th>Cotação (R$) / 1k</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -28,6 +29,14 @@
                     </td>
                     <td>{{ program.get_currency_type_display }}</td>
                     <td>
+                        {{ program.custom_rate | currency:'BRL' }}
+                    </td>
+                    <td>
+                        <button nz-button nzType="link" (click)="showEditModal(program)"
+                            [disabled]="!program.is_user_created">
+                            <i nz-icon nzType="edit"></i> Editar
+                        </button>
+                        <nz-divider nzType="vertical"></nz-divider>
                         <button nz-button nzType="default" (click)="toggleStatus(program)">
                             {{ program.is_active ? 'Desativar' : 'Reativar' }}
                         </button>
@@ -45,8 +54,9 @@
     </div>
 </div>
 
-<nz-modal [(nzVisible)]="isModalVisible" nzTitle="Adicionar Novo Programa" (nzOnCancel)="handleCancel()"
-    (nzOnOk)="handleOk()" [nzOkLoading]="isModalLoading">
+<nz-modal [(nzVisible)]="isModalVisible" [nzTitle]="editingId ? 'Editar Programa' : 'Adicionar Novo Programa'"
+    (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()" [nzOkLoading]="isModalLoading">
+
     <ng-container *nzModalContent>
         <form nz-form [formGroup]="programForm" nzLayout="vertical">
             <nz-form-item>
@@ -62,6 +72,14 @@
                         <nz-option *ngFor="let type of currencyTypes" [nzValue]="type.value"
                             [nzLabel]="type.label"></nz-option>
                     </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label nzRequired>Cotação Estimada (por 1.000)</nz-form-label>
+                <nz-form-control nzErrorTip="Informe o valor de mercado estimado.">
+                    <nz-input-number formControlName="custom_rate" [nzMin]="0" [nzStep]="0.50"
+                        [nzFormatter]="formatterDollar" [nzParser]="parserDollar" style="width: 100%;">
+                    </nz-input-number>
                 </nz-form-control>
             </nz-form-item>
         </form>

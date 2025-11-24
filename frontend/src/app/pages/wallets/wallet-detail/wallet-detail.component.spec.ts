@@ -56,6 +56,7 @@ const mockPrograms: LoyaltyProgram[] = [
     get_currency_type_display: 'Milhas',
     is_user_created: false,
     is_active: true,
+    custom_rate: 17.5,
   },
   {
     id: 2,
@@ -64,6 +65,7 @@ const mockPrograms: LoyaltyProgram[] = [
     get_currency_type_display: 'Milhas',
     is_user_created: false,
     is_active: true,
+    custom_rate: 23.0,
   },
 ];
 

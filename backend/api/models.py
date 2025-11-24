@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-# from django.utils import timezone # Descomente se for usar default=timezone.now em algum DateTimeField
 
 class LoyaltyProgram(models.Model):
     CURRENCY_TYPE_CHOICES = [
@@ -17,9 +16,14 @@ class LoyaltyProgram(models.Model):
     )
     name = models.CharField(max_length=100, unique=True)
     currency_type = models.IntegerField(choices=CURRENCY_TYPE_CHOICES)
+    custom_rate = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00,
+        help_text="Valor de mercado estimado por 1.000 milhas/pontos"
+    ) 
     is_active = models.BooleanField(default=True)
     is_user_created = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    
 
     def __str__(self):
         return self.name
@@ -51,17 +55,14 @@ class LoyaltyAccount(models.Model):
         on_delete=models.PROTECT,
         related_name="loyalty_accounts"
     )
-    account_number = models.CharField(max_length=100, blank=True) # Número da conta no programa de fidelidade
-    name = models.CharField(max_length=100) # Nome personalizado para a conta (ex: "Minha conta Smiles")
+    account_number = models.CharField(max_length=100, blank=True) 
+    name = models.CharField(max_length=100) 
     current_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     average_cost = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True,
         help_text="Custo médio por milheiro"
     )
-    custom_rate = models.DecimalField(
-        max_digits=10, decimal_places=4, null=True, blank=True,
-        help_text="Cotação personalizada por milheiro para avaliação de valor"
-    ) 
+    
     last_updated = models.DateTimeField(
         help_text="Data da última atualização de saldo/informações desta conta no programa de fidelidade"
     ) 
@@ -69,7 +70,6 @@ class LoyaltyAccount(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Nome da conta deve ser único dentro de uma carteira para um mesmo programa
         unique_together = ('wallet', 'program', 'name')
 
     def __str__(self):
@@ -96,7 +96,6 @@ class PointsTransaction(models.Model):
         help_text="Custo monetário associado à transação."
     )
 
-    # Contas envolvidas na transação
     origin_account = models.ForeignKey(
         LoyaltyAccount,
         on_delete=models.SET_NULL, 

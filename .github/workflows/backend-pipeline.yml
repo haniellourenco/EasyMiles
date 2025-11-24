@@ -6,12 +6,12 @@ on:
       - main
     paths:
       - "backend/**"
-    pull_request:
-      types: [opened, synchronize, reopened, closed]
-      branches:
-        - main
-      paths:
-        - "backend/**"
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+    paths:
+      - "backend/**"
   workflow_dispatch:
 
 jobs:
