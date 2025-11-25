@@ -95,7 +95,8 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              "src/staticwebapp.config.json"
             ],
             "styles": [
               "./node_modules/ng-zorro-antd/ng-zorro-antd.min.css",
