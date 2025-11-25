@@ -1,0 +1,95 @@
+<div style="padding: 24px;">
+    <h2 nz-typography>Painel de Controle</h2>
+
+    <nz-skeleton [nzActive]="true" [nzLoading]="isLoading">
+        <div *ngIf="data">
+            <div nz-row [nzGutter]="16">
+
+                <div nz-col [nzSpan]="8">
+                    <nz-card>
+                        <nz-statistic [nzValue]="(data.overall_estimated_value | number:'1.2-2') || ''"
+                            [nzTitle]="'Patrimônio Estimado (Em Milhas+Pontos)'" [nzPrefix]="'R$'"
+                            [nzValueStyle]="{ color: '#3F8600' }">
+                        </nz-statistic>
+                        <i nz-icon nzType="wallet"
+                            style="font-size: 24px; color: #e0e0e0; position: absolute; right: 24px; top: 24px;"></i>
+                    </nz-card>
+                </div>
+
+                <div nz-col [nzSpan]="8">
+                    <nz-card>
+                        <nz-statistic [nzValue]="(data.total_acquisition_cost_tracked | number:'1.2-2') || ''"
+                            [nzTitle]="'Custo Total de Aquisição'" [nzPrefix]="'R$'"
+                            [nzValueStyle]="{ color: '#CF1322' }">
+                        </nz-statistic>
+                        <i nz-icon nzType="shopping-cart"
+                            style="font-size: 24px; color: #e0e0e0; position: absolute; right: 24px; top: 24px;"></i>
+                    </nz-card>
+                </div>
+
+                <div nz-col [nzSpan]="8">
+                    <nz-card>
+                        <nz-statistic [nzValue]="(estimatedProfit | number:'1.2-2') || ''"
+                            [nzTitle]="'Lucro/Prejuízo Estimado'" [nzPrefix]="'R$'"
+                            [nzValueStyle]="{ color: estimatedProfit >= 0 ? '#3F8600' : '#CF1322' }">
+                        </nz-statistic>
+                        <p class="profit-subtitle" [style.color]="estimatedProfit >= 0 ? '#3F8600' : '#CF1322'">
+                            <i nz-icon [nzType]="estimatedProfit >= 0 ? 'arrow-up' : 'arrow-down'"></i>
+                            {{ profitMargin | number:'1.1-1' }}% sobre o investimento
+                        </p>
+                        <i nz-icon nzType="rise"
+                            style="font-size: 24px; color: #e0e0e0; position: absolute; right: 24px; top: 24px;"></i>
+                    </nz-card>
+                </div>
+            </div>
+
+            <div nz-row [nzGutter]="16" style="margin-top: 24px;">
+
+                <div nz-col [nzSpan]="16">
+                    <nz-card nzTitle="Top Programas por Valor">
+                        <nz-table #basicTable [nzData]="data.programs_summary" [nzShowPagination]="false"
+                            nzSize="small">
+                            <thead>
+                                <tr>
+                                    <th>Programa</th>
+                                    <th>Saldo</th>
+                                    <th>Valor Estimado</th>
+                                    <th>Representatividade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let item of basicTable.data">
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.total_balance | number }}</td>
+                                    <td>{{ item.total_value | currency:'BRL' }}</td>
+                                    <td style="width: 30%">
+                                        <nz-progress
+                                            [nzPercent]="(item.total_value / (data.overall_estimated_value || 1)) * 100 | number:'1.0-0'"
+                                            [nzShowInfo]="false" [nzStrokeColor]="'#1890ff'">
+                                        </nz-progress>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </nz-table>
+                    </nz-card>
+                </div>
+
+                <div nz-col [nzSpan]="8">
+                    <nz-card nzTitle="Resumo de Vendas de Milhas Aéreas">
+                        <div style="text-align: center; padding: 20px 0;">
+                            <h3 nz-typography style="margin-bottom: 0;">{{ data.total_revenue_from_sales |
+                                currency:'BRL' }}</h3>
+                            <span nz-typography nzType="secondary">Já embolsado em conta</span>
+                        </div>
+                        <nz-divider></nz-divider>
+                        <div style="text-align: center;">
+                            <h4 nz-typography>{{ data.total_points_milhas_sold | number }}</h4>
+                            <span nz-typography nzType="secondary">Milhas vendidas</span>
+                        </div>
+                    </nz-card>
+                </div>
+
+            </div>
+        </div>
+    </nz-skeleton>
+</div>
