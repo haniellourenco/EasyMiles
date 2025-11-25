@@ -5,6 +5,7 @@ import { MainLayoutComponent } from './layouts/main-layout/main-layout.component
 import { LoyaltyProgramsComponent } from './pages/loyalty-programs/loyalty-programs.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { AddTransactionComponent } from './pages/add-transaction/add-transaction.component';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
 
 import { authGuard } from './guards/auth.guard';
 
@@ -22,7 +23,11 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     canActivate: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'wallets' },
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: 'dashboard',
+        component: DashboardComponent,
+      },
       {
         path: 'wallets',
         loadChildren: () =>
@@ -44,6 +49,6 @@ export const routes: Routes = [
       },
     ],
   },
-  // Redireciona qualquer rota desconhecida para o login
-  { path: '**', redirectTo: 'login' },
+  // Redireciona qualquer rota desconhecida para '', que por sua vez redireciona para 'dashboard'
+  { path: '**', redirectTo: '' },
 ];

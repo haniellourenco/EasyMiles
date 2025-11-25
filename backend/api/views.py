@@ -433,20 +433,41 @@ class SummaryAPIView(views.APIView):
         
         active_accounts_qs = LoyaltyAccount.objects.filter(wallet__user=user, is_active=True).select_related('program')
         
+        # cálculo do programa patrimônio total
         total_estimated_value = Decimal('0.00')
+        programs_data = []
+
         if active_accounts_qs.exists():
             annotated_accounts = active_accounts_qs.annotate(
                 account_value=Case(
-                    When(program__custom_rate__isnull=False, program__custom_rate__gt=0,
-                         # Assumindo que custom_rate é por milheiro também
+                    When(program__custom_rate__isnull=False, program__custom_rate__gt=0, 
                          then=(F('current_balance') / Decimal('1000.0')) * F('program__custom_rate')),
                     default=Value(Decimal('0.00')),
                     output_field=DecimalField(max_digits=12, decimal_places=2)
                 )
             )
+            
+            # Soma total
             aggregation = annotated_accounts.aggregate(total_value_sum=Sum('account_value'))
             total_estimated_value = aggregation['total_value_sum'] or Decimal('0.00')
 
+            # Agrupa por programa para somar saldos e valores de contas diferentes do mesmo programa (ex: 2 contas Smiles)
+            programs_summary_qs = annotated_accounts.values(
+                'program__name', 'program__currency_type', 'program__custom_rate'
+            ).annotate(
+                total_balance=Sum('current_balance'),
+                total_value=Sum('account_value')
+            ).order_by('-total_value') 
+
+            for item in programs_summary_qs:
+                programs_data.append({
+                    "name": item['program__name'],
+                    "currency_type": item['program__currency_type'], 
+                    "total_balance": item['total_balance'],
+                    "total_value": item['total_value']
+                })
+
+        # Resumo por Tipo (Milhas vs Pontos) 
         currency_map = dict(LoyaltyProgram.CURRENCY_TYPE_CHOICES)
         balances_by_currency_type = active_accounts_qs.values(
             'program__currency_type' 
@@ -464,6 +485,7 @@ class SummaryAPIView(views.APIView):
                 "distinct_programs_count": item['program_count']
             })
         
+        #  Custos e Vendas
         total_acquisition_cost = PointsTransaction.objects.filter(
             (Q(destination_account__wallet__user=user) & Q(transaction_type=1) & Q(cost__isnull=False) & Q(cost__gt=0)) |
             (Q(destination_account__wallet__user=user) & Q(transaction_type=2) & Q(cost__isnull=False) & Q(cost__gt=0)) 
@@ -482,6 +504,7 @@ class SummaryAPIView(views.APIView):
             "total_wallets": UserWallet.objects.filter(user=user).count(),
             "total_active_loyalty_accounts": active_accounts_qs.count(),
             "overall_estimated_value": total_estimated_value.quantize(Decimal('0.01')),
+            "programs_summary": programs_data,
             "balances_by_currency_type": processed_balances,
             "total_acquisition_cost_tracked": total_acquisition_cost.quantize(Decimal('0.01')),
             "total_points_milhas_sold": sales_summary['total_points_sold'] or Decimal('0.00'),
