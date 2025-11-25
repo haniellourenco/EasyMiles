@@ -87,8 +87,8 @@ describe('LoginComponent', () => {
 
   it('deve inicializar o formulário com valores padrão e validadores', () => {
     expect(component.loginForm).toBeDefined();
-    expect(component.loginForm.get('username')?.value).toBe('teste');
-    expect(component.loginForm.get('password')?.value).toBe('1234');
+    expect(component.loginForm.get('username')?.value).toBe('');
+    expect(component.loginForm.get('password')?.value).toBe('');
     expect(component.loginForm.get('remember')?.value).toBe(true);
     expect(
       component.loginForm.get('username')?.hasValidator(Validators.required)
