@@ -1,0 +1,15 @@
+.page-container {
+  padding: 24px;
+}
+
+.filter-card {
+  margin-bottom: 24px;
+  margin-top: 24px;
+}
+
+.table-container {
+  background-color: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}

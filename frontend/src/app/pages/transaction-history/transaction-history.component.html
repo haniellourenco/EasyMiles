@@ -1,0 +1,88 @@
+<div class="page-container">
+    <nz-page-header nzTitle="Histórico de Transações" nzSubtitle="Consulte e audite suas movimentações">
+        <nz-page-header-extra>
+            <button nz-button nzType="primary" routerLink="/add-transaction">
+                <i nz-icon nzType="plus"></i> Nova Transação
+            </button>
+        </nz-page-header-extra>
+    </nz-page-header>
+
+    <nz-card class="filter-card">
+        <div nz-row [nzGutter]="16" nzAlign="middle">
+            <div nz-col [nzSpan]="6">
+                <nz-range-picker [(ngModel)]="filterDateRange" (ngModelChange)="applyFilters()"
+                    style="width: 100%;"></nz-range-picker>
+            </div>
+            <div nz-col [nzSpan]="5">
+                <nz-select [(ngModel)]="filterAccount" (ngModelChange)="applyFilters()"
+                    nzPlaceHolder="Filtrar por Conta" nzAllowClear style="width: 100%;">
+                    <nz-option *ngFor="let acc of accounts" [nzValue]="acc.id"
+                        [nzLabel]="acc.name + ' (' + acc.program_name + ')'"></nz-option>
+                </nz-select>
+            </div>
+            <div nz-col [nzSpan]="5">
+                <nz-select [(ngModel)]="filterType" (ngModelChange)="applyFilters()" nzPlaceHolder="Tipo de Transação"
+                    nzAllowClear style="width: 100%;">
+                    <nz-option *ngFor="let type of transactionTypes" [nzValue]="type.value"
+                        [nzLabel]="type.label"></nz-option>
+                </nz-select>
+            </div>
+            <div nz-col [nzSpan]="4">
+                <button nz-button (click)="resetFilters()">Limpar Filtros</button>
+            </div>
+            <div nz-col [nzSpan]="4" style="text-align: right;">
+                <span nz-typography nzType="secondary">{{ displayTransactions.length }} registros</span>
+            </div>
+        </div>
+    </nz-card>
+
+    <div class="table-container">
+        <nz-table #basicTable [nzData]="displayTransactions" [nzLoading]="isLoading" [nzPageSize]="10">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Detalhes</th>
+                    <th nzAlign="right">Quantidade</th>
+                    <th nzAlign="right">Valor (R$)</th>
+                    <th nzAlign="center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let item of basicTable.data">
+                    <td>{{ item.transaction_date | date:'dd/MM/yyyy' }}</td>
+                    <td>
+                        <nz-tag [nzColor]="getTypeColor(item.transaction_type)">
+                            <i nz-icon [nzType]="getTypeIcon(item.transaction_type)"></i>
+                            {{ item.transaction_type_display }}
+                        </nz-tag>
+                        <i *ngIf="item.description" nz-icon nzType="info-circle" nzTheme="twotone" nz-tooltip
+                            [nzTooltipTitle]="item.description" style="cursor: help; margin-left: 5px;"></i>
+                    </td>
+                    <td>{{ getTransactionDetails(item) }}</td>
+
+                    <td nzAlign="right"
+                        [style.color]="isPositive(item) ? '#3F8600' : (item.transaction_type === 2 ? '#000' : '#CF1322')">
+                        <span *ngIf="isPositive(item)">+</span>
+                        <span *ngIf="[3,4,5].includes(item.transaction_type)">-</span>
+                        {{ item.amount | number }}
+                    </td>
+
+                    <td nzAlign="right">
+                        <span *ngIf="item.cost && item.cost != '0.00'">
+                            {{ item.cost | currency:'BRL' }}
+                        </span>
+                        <span *ngIf="!item.cost || item.cost == '0.00'" nz-typography nzType="secondary">-</span>
+                    </td>
+
+                    <td nzAlign="center">
+                        <a nz-popconfirm nzPopconfirmTitle="Tem certeza? Isso reverterá o saldo das contas."
+                            (nzOnConfirm)="deleteTransaction(item.id)" nzDanger>
+                            <i nz-icon nzType="delete"></i>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </nz-table>
+    </div>
+</div>
