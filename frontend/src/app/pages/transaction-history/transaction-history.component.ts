@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { RouterModule } from '@angular/router';
 
 import {
   TransactionService,
@@ -29,6 +30,7 @@ import { NzGridModule } from 'ng-zorro-antd/grid';
     FormsModule,
     NzTableModule,
     NzPageHeaderModule,
+    RouterModule,
     NzButtonModule,
     NzIconModule,
     NzTagModule,
