@@ -89,9 +89,12 @@ Viajantes e acumuladores de milhas enfrentam dificuldades em:
 2.  **Configuração do Backend (Docker)**
     O backend e o banco de dados sobem via Docker Compose.
 
-    \_Crie um arquivo `.env` dentro da pasta `backend/` com as configurações do banco:
+    Crie um arquivo `.env` dentro da pasta `backend/` com as seguintes configurações:
 
     ```
+    SECRET_KEY=secret-key-dev
+    ALLOWED_HOSTS=localhost,127.0.0.1,web
+    CORS_ALLOWED_ORIGINS=http://localhost:4200
     DB_NAME=easymiles-dev
     DB_USER=local_user
     DB_PASSWORD=local_password
