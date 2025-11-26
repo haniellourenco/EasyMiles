@@ -143,32 +143,40 @@ class PointsTransactionSerializer(serializers.ModelSerializer):
             )
 
     def _validate_transaction_type_rules(self, ttype, origin, dest):
-        """Aplica as regras de negócio específicas para cada tipo de transação."""
-        
+        """Roteador que chama a validação específica para cada tipo."""
         if ttype == 1:  # Inclusão Manual
-            if not dest:
-                raise serializers.ValidationError({'destination_account': "A conta de destino deve ser definida para 'Inclusão Manual'."})
-            if origin:
-                raise serializers.ValidationError({'origin_account': "A conta de origem não deve ser definida para 'Inclusão Manual'."})
-                
+            self._validate_inclusion(origin, dest)
         elif ttype == 2:  # Transferência
-            if not origin or not dest:
-                raise serializers.ValidationError("A conta de origem e destino devem ser definidas para 'Transferência'.")
-            if origin == dest:
-                raise serializers.ValidationError("A conta de origem e destino não podem ser a mesma para uma transferência.")
-                
+            self._validate_transfer(origin, dest)
         elif ttype in [3, 4, 5]:  # Resgate, Venda, Expiração
-            label = PointsTransaction.TRANSACTION_TYPE_CHOICES[ttype-1][1]
-            if not origin:
-                raise serializers.ValidationError({'origin_account': f"A conta de origem deve ser definida para '{label}'."})
-            if dest:
-                raise serializers.ValidationError({'destination_account': f"A conta de destino não deve ser definida para '{label}'."})
-                
-        elif ttype == 6:  # Ajuste de Saldo
-            if not origin and not dest:
-                raise serializers.ValidationError("Uma conta de origem ou destino deve ser fornecida para 'Ajuste de Saldo'.")
-            if origin and dest:
-                raise serializers.ValidationError("Forneça apenas uma conta (origem ou destino) para 'Ajuste de Saldo'.")
+            self._validate_debit(ttype, origin, dest)
+        elif ttype == 6:  # Ajuste
+            self._validate_adjustment(origin, dest)
+
+    def _validate_inclusion(self, origin, dest):
+        if not dest:
+            raise serializers.ValidationError({'destination_account': "A conta de destino deve ser definida para 'Inclusão Manual'."})
+        if origin:
+            raise serializers.ValidationError({'origin_account': "A conta de origem não deve ser definida para 'Inclusão Manual'."})
+
+    def _validate_transfer(self, origin, dest):
+        if not origin or not dest:
+            raise serializers.ValidationError("A conta de origem e destino devem ser definidas para 'Transferência'.")
+        if origin == dest:
+            raise serializers.ValidationError("A conta de origem e destino não podem ser a mesma para uma transferência.")
+
+    def _validate_debit(self, ttype, origin, dest):
+        label = PointsTransaction.TRANSACTION_TYPE_CHOICES[ttype-1][1]
+        if not origin:
+            raise serializers.ValidationError({'origin_account': f"A conta de origem deve ser definida para '{label}'."})
+        if dest:
+            raise serializers.ValidationError({'destination_account': f"A conta de destino não deve ser definida para '{label}'."})
+
+    def _validate_adjustment(self, origin, dest):
+        if not origin and not dest:
+            raise serializers.ValidationError("Uma conta de origem ou destino deve ser fornecida para 'Ajuste de Saldo'.")
+        if origin and dest:
+            raise serializers.ValidationError("Forneça apenas uma conta (origem ou destino) para 'Ajuste de Saldo'.")
 
 class SimulateTransferSerializer(serializers.Serializer):
     from_account_id = serializers.IntegerField(required=True)
