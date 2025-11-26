@@ -127,29 +127,38 @@ class PointsTransaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text="Data de registro da transação") 
 
     def __str__(self):
-        action = "???"
-        account_name = "N/A"
-        if self.transaction_type == 1: # Inclusão Manual
-            action = "Crédito para"
-            if self.destination_account: account_name = self.destination_account.name
-        elif self.transaction_type == 2: # Transferência
-            action = f"Transferência de {self.origin_account.name if self.origin_account else 'N/A'} para"
-            if self.destination_account: account_name = self.destination_account.name
-        elif self.transaction_type == 3: # Resgate
-            action = "Resgate de"
-            if self.origin_account: account_name = self.origin_account.name
-        elif self.transaction_type == 4: # Venda
-            action = "Venda de"
-            if self.origin_account: account_name = self.origin_account.name
-        elif self.transaction_type == 5: # Expiração
-            action = "Expiração de"
-            if self.origin_account: account_name = self.origin_account.name
-        elif self.transaction_type == 6: # Ajuste
-            action = "Ajuste em"
-            if self.origin_account: account_name = self.origin_account.name
-            elif self.destination_account: account_name = self.destination_account.name
+        origin_name = self.origin_account.name if self.origin_account else 'N/A'
+        dest_name = self.destination_account.name if self.destination_account else 'N/A'
 
-        return f"{self.get_transaction_type_display()} [{action} {account_name}]: {self.amount} em {self.transaction_date.strftime('%Y-%m-%d')}"
+        action = "???"
+        target_name = "N/A"
+
+        if self.transaction_type == 1:  # Inclusão Manual
+            action = "Crédito para"
+            target_name = dest_name
+            
+        elif self.transaction_type == 2:  # Transferência
+            action = f"Transferência de {origin_name} para"
+            target_name = dest_name
+            
+        elif self.transaction_type == 3:  # Resgate
+            action = "Resgate de"
+            target_name = origin_name
+            
+        elif self.transaction_type == 4:  # Venda
+            action = "Venda de"
+            target_name = origin_name
+            
+        elif self.transaction_type == 5:  # Expiração
+            action = "Expiração de"
+            target_name = origin_name
+            
+        elif self.transaction_type == 6:  # Ajuste
+            action = "Ajuste em"
+            target_name = origin_name if self.origin_account else dest_name
+
+        date_str = self.transaction_date.strftime('%Y-%m-%d')
+        return f"{self.get_transaction_type_display()} [{action} {target_name}]: {self.amount} em {date_str}"
 
     class Meta:
         ordering = ['-transaction_date', '-created_at']
