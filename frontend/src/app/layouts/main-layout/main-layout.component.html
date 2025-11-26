@@ -46,11 +46,11 @@
 
                     <a nz-dropdown [nzDropdownMenu]="userMenu" nzPlacement="bottomRight" [nzTrigger]="'click'">
                         <nz-avatar nzIcon="user" style="background-color: #1890ff"></nz-avatar>
-                        <span class="user-name">{{ user.first_name || user.username }}</span>
+                        <span class="user-name">{{ user.first_name}} {{user.last_name}}</span>
                     </a>
                     <nz-dropdown-menu #userMenu="nzDropdownMenu">
                         <ul nz-menu>
-                            <li nz-menu-item>
+                            <li nz-menu-item routerLink="/profile">
                                 <i nz-icon nzType="user" class="action-icon"></i> Perfil
                             </li>
                             <li nz-menu-divider></li>

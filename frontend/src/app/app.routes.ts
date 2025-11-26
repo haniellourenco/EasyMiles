@@ -7,6 +7,7 @@ import { SettingsComponent } from './pages/settings/settings.component';
 import { AddTransactionComponent } from './pages/add-transaction/add-transaction.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { TransactionHistoryComponent } from './pages/transaction-history/transaction-history.component';
+import { ProfileComponent } from './pages/profile/profile.component';
 
 import { authGuard } from './guards/auth.guard';
 
@@ -51,6 +52,10 @@ export const routes: Routes = [
       {
         path: 'transaction-history',
         component: TransactionHistoryComponent,
+      },
+      {
+        path: 'profile',
+        component: ProfileComponent,
       },
     ],
   },

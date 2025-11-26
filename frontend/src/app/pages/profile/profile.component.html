@@ -1,0 +1,61 @@
+<div style="padding: 24px;">
+    <nz-page-header nzTitle="Meu Perfil" nzSubtitle="Gerencie seus dados pessoais">
+    </nz-page-header>
+
+    <div style="margin-top: 24px; max-width: 800px;">
+        <nz-spin [nzSpinning]="isLoading">
+            <nz-card>
+                <form nz-form [formGroup]="profileForm" (ngSubmit)="submitForm()" nzLayout="vertical">
+
+                    <div nz-row [nzGutter]="16">
+                        <div nz-col [nzSpan]="12">
+                            <nz-form-item>
+                                <nz-form-label>Usuário</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input formControlName="username" />
+                                    <span nz-typography nzType="secondary" style="font-size: 12px;">
+                                        O nome de usuário não pode ser alterado.
+                                    </span>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </div>
+                        <div nz-col [nzSpan]="12">
+                            <nz-form-item>
+                                <nz-form-label>E-mail</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input formControlName="email" />
+                                    <span nz-typography nzType="secondary" style="font-size: 12px;">
+                                        O e-mail não pode ser alterado.
+                                    </span>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </div>
+                    </div>
+
+                    <div nz-row [nzGutter]="16">
+                        <div nz-col [nzSpan]="12">
+                            <nz-form-item>
+                                <nz-form-label nzRequired>Nome</nz-form-label>
+                                <nz-form-control nzErrorTip="O nome é obrigatório.">
+                                    <input nz-input formControlName="first_name" placeholder="Seu nome" />
+                                </nz-form-control>
+                            </nz-form-item>
+                        </div>
+                        <div nz-col [nzSpan]="12">
+                            <nz-form-item>
+                                <nz-form-label nzRequired>Sobrenome</nz-form-label>
+                                <nz-form-control nzErrorTip="O sobrenome é obrigatório.">
+                                    <input nz-input formControlName="last_name" placeholder="Seu sobrenome" />
+                                </nz-form-control>
+                            </nz-form-item>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 16px; text-align: right;">
+                        <button nz-button nzType="primary" [nzLoading]="isSaving">Salvar Alterações</button>
+                    </div>
+                </form>
+            </nz-card>
+        </nz-spin>
+    </div>
+</div>
