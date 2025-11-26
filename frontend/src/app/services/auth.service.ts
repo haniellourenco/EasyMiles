@@ -155,4 +155,11 @@ export class AuthService {
         })
       );
   }
+  updateProfile(data: Partial<UserProfile>): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(`${this.apiUrl}/users/me/`, data).pipe(
+      tap((updatedUser) => {
+        this.currentUserSubject.next(updatedUser);
+      })
+    );
+  }
 }
