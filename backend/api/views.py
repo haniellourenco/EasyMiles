@@ -173,110 +173,97 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 
     def _apply_transaction_effects(self, transaction: PointsTransaction):
         ttype = transaction.transaction_type
-        amount = abs(transaction.amount) # Garante que o montante é positivo
-        transaction_cost = transaction.cost if transaction.cost is not None else Decimal('0.00') 
+        amount = abs(transaction.amount)
+        cost = transaction.cost if transaction.cost is not None else Decimal('0.00')
 
-        # Tipo 1: Inclusão Manual (Crédito)
-        if ttype == 1 and transaction.destination_account:
-            acc = transaction.destination_account
-            old_balance = acc.current_balance
-            old_avg_cost_per_thousand = acc.average_cost if acc.average_cost is not None else Decimal('0.00')
+        if ttype == 1:  # Inclusão Manual
+            self._apply_manual_inclusion(transaction, amount, cost)
+        elif ttype == 2:  # Transferência
+            self._apply_transfer(transaction, amount, cost)
+        elif ttype in [3, 4, 5]:  # Resgate, Venda, Expiração
+            self._apply_debit_transaction(transaction, amount)
+        elif ttype == 6:  # Ajuste de Saldo
+            self._apply_balance_adjustment(transaction, amount, cost)
 
-            acc.current_balance += amount
+    def _calculate_new_average_cost(self, current_balance, current_avg_cost, added_amount, added_cost):
+        """Calcula o novo custo médio ponderado após uma adição de pontos."""
+        if added_amount <= 0:
+            return current_avg_cost
+            
+        old_total_cost = (current_balance / Decimal('1000.0')) * current_avg_cost
+        new_total_cost = old_total_cost + added_cost
+        new_total_balance = current_balance + added_amount
 
-            if amount > 0:
-                old_total_cost = (old_balance / Decimal('1000.0')) * old_avg_cost_per_thousand
-                added_total_cost = transaction_cost 
-                new_total_cost = old_total_cost + added_total_cost
-                new_total_balance = acc.current_balance 
+        if new_total_balance > 0:
+            new_avg = (new_total_cost / new_total_balance) * Decimal('1000.0')
+            return new_avg.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        return Decimal('0.00')
 
-                if new_total_balance > 0:
-                    new_avg_cost_per_thousand = (new_total_cost / new_total_balance) * Decimal('1000.0')
-                    acc.average_cost = new_avg_cost_per_thousand.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-                else:
-                    acc.average_cost = Decimal('0.00')
+    def _apply_manual_inclusion(self, transaction, amount, cost):
+        if not transaction.destination_account:
+            return
+            
+        acc = transaction.destination_account
+        old_avg_cost = acc.average_cost if acc.average_cost is not None else Decimal('0.00')
+        
+        acc.average_cost = self._calculate_new_average_cost(acc.current_balance, old_avg_cost, amount, cost)
+        acc.current_balance += amount
+        acc.last_updated = timezone.now()
+        acc.save()
 
-            acc.last_updated = timezone.now()
-            acc.save()
+    def _apply_transfer(self, transaction, amount, cost):
+        if not transaction.origin_account or not transaction.destination_account:
+            return
 
-        # Tipo 2: Transferência
-        elif ttype == 2 and transaction.origin_account and transaction.destination_account:
-            origin_acc = transaction.origin_account
-            dest_acc = transaction.destination_account
-            bonus_perc = transaction.bonus_percentage if transaction.bonus_percentage is not None else Decimal('0.00')
+        origin = transaction.origin_account
+        dest = transaction.destination_account
+        bonus_perc = transaction.bonus_percentage if transaction.bonus_percentage is not None else Decimal('0.00')
+        
+        # 1. Debita da Origem
+        origin.current_balance -= amount
+        origin.last_updated = timezone.now()
+        origin.save()
 
-            amount_credited_to_dest = amount * (Decimal('1.00') + (bonus_perc / Decimal('100.00')))
-            amount_credited_to_dest = amount_credited_to_dest.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        # 2. Calcula valores para o Destino
+        amount_credited = amount * (Decimal('1.00') + (bonus_perc / Decimal('100.00')))
+        amount_credited = amount_credited.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        origin_avg_cost = origin.average_cost if origin.average_cost is not None else Decimal('0.00')
+        cost_of_transferred_points = (amount / Decimal('1000.0')) * origin_avg_cost
+        total_cost_added_to_dest = cost_of_transferred_points + cost
 
-            old_avg_cost_origin_per_thousand = origin_acc.average_cost if origin_acc.average_cost is not None else Decimal('0.00')
+        # 3. Credita no Destino
+        dest_avg_cost = dest.average_cost if dest.average_cost is not None else Decimal('0.00')
+        dest.average_cost = self._calculate_new_average_cost(dest.current_balance, dest_avg_cost, amount_credited, total_cost_added_to_dest)
+        dest.current_balance += amount_credited
+        dest.last_updated = timezone.now()
+        dest.save()
 
-            cost_of_points_transferred = (amount / Decimal('1000.0')) * old_avg_cost_origin_per_thousand
-
-            origin_acc.current_balance -= amount
-            origin_acc.last_updated = timezone.now()
-            origin_acc.save()
-
-            old_balance_dest = dest_acc.current_balance
-            old_avg_cost_dest_per_thousand = dest_acc.average_cost if dest_acc.average_cost is not None else Decimal('0.00')
-
-            dest_acc.current_balance += amount_credited_to_dest
-
-            if amount_credited_to_dest > 0:
-                old_total_cost_dest = (old_balance_dest / Decimal('1000.0')) * old_avg_cost_dest_per_thousand
-                # Custo total adicionado ao destino = custo dos pontos transferidos + taxa de transferência (transaction_cost)
-                added_total_cost_dest = cost_of_points_transferred + transaction_cost
-                new_total_cost_dest = old_total_cost_dest + added_total_cost_dest
-                new_total_balance_dest = dest_acc.current_balance 
-
-                if new_total_balance_dest > 0:
-                    new_avg_cost_dest_per_thousand = (new_total_cost_dest / new_total_balance_dest) * Decimal('1000.0')
-                    dest_acc.average_cost = new_avg_cost_dest_per_thousand.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-                else:
-                     dest_acc.average_cost = Decimal('0.00')
-
-            dest_acc.last_updated = timezone.now()
-            dest_acc.save()
-
-        # Tipo 3, 4, 5: Resgate, Venda, Expiração (Débito)
-        elif ttype in [3, 4, 5] and transaction.origin_account:
+    def _apply_debit_transaction(self, transaction, amount):
+        """Aplica Resgate, Venda ou Expiração (apenas debita saldo)."""
+        if transaction.origin_account:
             acc = transaction.origin_account
             acc.current_balance -= amount
             acc.last_updated = timezone.now()
             acc.save()
 
-        # Tipo 6: Ajuste de Saldo
-        elif ttype == 6:
-            if transaction.destination_account:
-                acc = transaction.destination_account
-                old_balance = acc.current_balance
-                old_avg_cost_per_thousand = acc.average_cost if acc.average_cost is not None else Decimal('0.00')
-
-                acc.current_balance += amount
-
-                if transaction_cost > 0 and amount > 0:
-                    old_total_cost = (old_balance / Decimal('1000.0')) * old_avg_cost_per_thousand
-                    added_total_cost = transaction_cost
-                    new_total_cost = old_total_cost + added_total_cost
-                    new_total_balance = acc.current_balance
-
-                    if new_total_balance > 0:
-                         new_avg_cost_per_thousand = (new_total_cost / new_total_balance) * Decimal('1000.0')
-                         acc.average_cost = new_avg_cost_per_thousand.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-                    else:
-                         acc.average_cost = Decimal('0.00')
-                elif old_balance > 0 and old_avg_cost_per_thousand > 0 and transaction_cost == 0 and amount > 0:
-                    old_total_cost = (old_balance / Decimal('1000.0')) * old_avg_cost_per_thousand
-                    new_total_balance = acc.current_balance
-                    new_avg_cost_per_thousand = (old_total_cost / new_total_balance) * Decimal('1000.0') 
-                    acc.average_cost = new_avg_cost_per_thousand.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
-                acc.last_updated = timezone.now()
-                acc.save()
-            elif transaction.origin_account: 
-                acc = transaction.origin_account
-                acc.current_balance -= amount
-                acc.last_updated = timezone.now()
-                acc.save()
+    def _apply_balance_adjustment(self, transaction, amount, cost):
+        if transaction.destination_account: # Ajuste de Crédito
+            acc = transaction.destination_account
+            old_avg_cost = acc.average_cost if acc.average_cost is not None else Decimal('0.00')
+            
+            # Se houver custo, recaucula o médio. Se não, mantém ou dilui.
+            # Para simplificar: se custo > 0, agrega valor. Se custo == 0, dilui o preço médio (entra saldo a custo zero).
+            acc.average_cost = self._calculate_new_average_cost(acc.current_balance, old_avg_cost, amount, cost)
+            acc.current_balance += amount
+            acc.last_updated = timezone.now()
+            acc.save()
+            
+        elif transaction.origin_account: # Ajuste de Débito
+            acc = transaction.origin_account
+            acc.current_balance -= amount
+            acc.last_updated = timezone.now()
+            acc.save()
 
     def _reverse_transaction_effects(self, transaction: PointsTransaction):
         ttype = transaction.transaction_type
