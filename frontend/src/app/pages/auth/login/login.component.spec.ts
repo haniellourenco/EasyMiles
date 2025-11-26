@@ -126,7 +126,7 @@ describe('LoginComponent', () => {
     });
   });
 
-  it('deve navegar para /wallets e mostrar mensagem de sucesso em caso de login bem-sucedido', fakeAsync(() => {
+  it('deve navegar para /dashboard e mostrar mensagem de sucesso em caso de login bem-sucedido', fakeAsync(() => {
     mockAuthService.login.and.returnValue(of(mockUserProfile));
     spyOn(mockMessageService, 'success');
     spyOn(router, 'navigate');
@@ -140,7 +140,7 @@ describe('LoginComponent', () => {
     expect(mockMessageService.success).toHaveBeenCalledWith(
       'Login realizado com sucesso!'
     );
-    expect(router.navigate).toHaveBeenCalledWith(['/wallets']);
+    expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
   }));
 
   it('deve mostrar mensagem de erro e não navegar se o login falhar', fakeAsync(() => {
