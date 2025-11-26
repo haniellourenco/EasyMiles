@@ -266,61 +266,53 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
             acc.save()
 
     def _reverse_transaction_effects(self, transaction: PointsTransaction):
+        """Reverte os efeitos financeiros de uma transação (ex: ao deletar ou editar)."""
         ttype = transaction.transaction_type
         amount = abs(transaction.amount)
 
-        if ttype == 1 and transaction.destination_account:
-            try:
-                acc = LoyaltyAccount.objects.get(pk=transaction.destination_account.pk)
-                acc.current_balance -= amount
-                acc.last_updated = timezone.now()
-                acc.save()
-            except LoyaltyAccount.DoesNotExist: pass
+        if ttype == 1:  # Inclusão Manual
+            self._safe_update_balance(transaction.destination_account, -amount)
 
-        elif ttype == 2 and transaction.origin_account and transaction.destination_account:
-            bonus_perc = transaction.bonus_percentage if transaction.bonus_percentage is not None else Decimal('0.00')
-            amount_credited_to_dest = amount * (Decimal('1.00') + (bonus_perc / Decimal('100.00')))
-            amount_credited_to_dest = amount_credited_to_dest.quantize(Decimal('0.01'))
+        elif ttype == 2:  # Transferência
+            self._reverse_transfer(transaction, amount)
 
-            try:
-                if transaction.origin_account:
-                    origin_acc = LoyaltyAccount.objects.get(pk=transaction.origin_account.pk)
-                    origin_acc.current_balance += amount
-                    origin_acc.last_updated = timezone.now()
-                    origin_acc.save()
-            except LoyaltyAccount.DoesNotExist: pass
+        elif ttype in [3, 4, 5]:  # Resgate/Venda/Expiração
+            self._safe_update_balance(transaction.origin_account, amount)
 
-            try:
-                if transaction.destination_account:
-                    dest_acc = LoyaltyAccount.objects.get(pk=transaction.destination_account.pk)
-                    dest_acc.current_balance -= amount_credited_to_dest
-                    dest_acc.last_updated = timezone.now()
-                    dest_acc.save()
-            except LoyaltyAccount.DoesNotExist: pass
+        elif ttype == 6:  # Ajuste
+            self._reverse_balance_adjustment(transaction, amount)
 
-        elif ttype in [3, 4, 5] and transaction.origin_account:
-             try:
-                acc = LoyaltyAccount.objects.get(pk=transaction.origin_account.pk)
-                acc.current_balance += amount
-                acc.last_updated = timezone.now()
-                acc.save()
-             except LoyaltyAccount.DoesNotExist: pass
+    def _safe_update_balance(self, account, amount_delta):
+        """
+        Tenta atualizar o saldo de uma conta de forma segura.
+        amount_delta: Valor a ser somado (pode ser negativo para debitar).
+        """
+        if not account:
+            return
+        try:
+            acc = LoyaltyAccount.objects.get(pk=account.pk)
+            acc.current_balance += amount_delta
+            acc.last_updated = timezone.now()
+            acc.save()
+        except LoyaltyAccount.DoesNotExist:
+            pass
 
-        elif ttype == 6:
-            if transaction.destination_account:
-                 try:
-                    acc = LoyaltyAccount.objects.get(pk=transaction.destination_account.pk)
-                    acc.current_balance -= amount
-                    acc.last_updated = timezone.now()
-                    acc.save()
-                 except LoyaltyAccount.DoesNotExist: pass
-            elif transaction.origin_account:
-                 try:
-                    acc = LoyaltyAccount.objects.get(pk=transaction.origin_account.pk)
-                    acc.current_balance += amount
-                    acc.last_updated = timezone.now()
-                    acc.save()
-                 except LoyaltyAccount.DoesNotExist: pass
+    def _reverse_transfer(self, transaction, amount):
+        # Devolve os pontos para a origem
+        self._safe_update_balance(transaction.origin_account, amount)
+
+        # Remove os pontos (com bônus) do destino
+        bonus_perc = transaction.bonus_percentage if transaction.bonus_percentage is not None else Decimal('0.00')
+        amount_credited = amount * (Decimal('1.00') + (bonus_perc / Decimal('100.00')))
+        amount_to_remove = amount_credited.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        self._safe_update_balance(transaction.destination_account, -amount_to_remove)
+
+    def _reverse_balance_adjustment(self, transaction, amount):
+        if transaction.destination_account:
+            self._safe_update_balance(transaction.destination_account, -amount)
+        elif transaction.origin_account:
+            self._safe_update_balance(transaction.origin_account, amount)
 
 class SimulationViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
