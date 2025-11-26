@@ -66,7 +66,7 @@ export class LoginComponent implements OnInit {
       this.authService.login(credentials).subscribe({
         next: () => {
           this.message.success('Login realizado com sucesso!');
-          this.router.navigate(['/wallets']);
+          this.router.navigate(['/dashboard']);
         },
         error: (err) => {
           console.error('Erro de login', err);
