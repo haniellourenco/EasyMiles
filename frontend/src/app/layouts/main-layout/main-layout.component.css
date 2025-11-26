@@ -7,6 +7,8 @@
 
 .app-layout {
   height: 100vh;
+  display: flex;
+  flex-direction: row;
 }
 
 .menu-sidebar {
@@ -14,6 +16,7 @@
   z-index: 10;
   min-height: 100vh;
   box-shadow: 2px 0 6px rgba(0, 21, 41, 0.35);
+  overflow-y: auto;
 }
 
 .header-trigger {
@@ -64,29 +67,37 @@ nz-header {
 .app-header {
   position: relative;
   height: 64px;
-  padding: 0;
+  padding: 0 3rem;
   background: #fff;
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.right-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  width: 100%;
 }
 
 nz-content {
   margin: 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .inner-content {
   padding: 24px;
   background: #fff;
-  height: 100%;
+  border-radius: 4px;
+  min-height: 100%;
 }
+
 :host ::ng-deep .ant-layout-sider {
   background: #fff;
-}
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  padding: 0 3rem;
 }
 
 .header-right {
@@ -96,7 +107,6 @@ nz-content {
 .user-name {
   margin-left: 8px;
   font-weight: 500;
-
   color: rgba(0, 0, 0, 0.85);
 }
 
