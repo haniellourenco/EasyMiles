@@ -19,6 +19,8 @@ A solução substitui o controle manual (geralmente feito em planilhas complexas
 
 Projeto desenvolvido como parte da disciplina de **Engenharia de Software** do Centro Universitário Católica de Santa Catarina.
 
+O projeto pode ser acessado em produção através do link [easymiles.com.br](https://www.easymiles.com.br/) e utilizado um usuário de teste com dados cujo login e senha é **teste123**
+
 ## 🎯 Problema Resolvido
 
 Viajantes e acumuladores de milhas enfrentam dificuldades em:
